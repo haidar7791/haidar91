@@ -18,7 +18,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.haidar7791.spacebasegame",
+      "package": "com.haidar7791.spacebasegame", 
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -26,11 +26,7 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "380a2e29-0985-4c3d-80a1-e70d88f3042b"
-      }
     }
   }
 }
+
