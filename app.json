@@ -6,7 +6,8 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "updates": {
-      "fallbackToCacheTimeout": 0
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/0e04cdda-97af-4f8c-8423-fd445c8109e3"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -17,7 +18,7 @@
     "android": {
       "package": "com.haidar7791.spacebasegame",
       "adaptiveIcon": {
-        "backgroundColor": "#FFFFFF" 
+        "backgroundColor": "#FFFFFF"
       }
     },
     "web": {
@@ -27,7 +28,9 @@
       "eas": {
         "projectId": "0e04cdda-97af-4f8c-8423-fd445c8109e3"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }
-
