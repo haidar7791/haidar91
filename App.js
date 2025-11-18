@@ -1,270 +1,145 @@
-import React, { useState } from 'react';
-import { View, Text, Button, ScrollView, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from "react";
+import { View, Text, Button, StyleSheet, Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Map from "./components/Map";
 
-// تعريف الحالة الأولية للعبة (مكافئ لفئة Base في بايثون)
-const INITIAL_STATE = {
-    name: "قاعدة كونية",
-    cobalt: 500,
-    crystals: 100,
-    buildings: { 
-        "Space_Hub": 1, 
-        "Cobalt_Mine": 1, 
-        "Laser_Turret": 0 
-    },
-    max_storage: 1000,
-    troops: { "Mech_Infantry": 0 },
-    stellar_fuel: 5,
-};
-
-// =======================================================
-// المكون الرئيسي للتطبيق
-// =======================================================
 export default function App() {
-    const [base, setBase] = useState(INITIAL_STATE);
+  const [buildings, setBuildings] = useState([]);
+  const [resources, setResources] = useState({
+    cobalt: 1000,
+    mercury: 500,
+    crystals: 10
+  });
 
-    // دالة مساعدة لتحديث حالة القاعدة بأمان
-    const updateBase = (updates) => {
-        setBase(prevBase => ({
-            ...prevBase, 
-            ...updates, 
-        }));
+  useEffect(() => {
+    loadBuildings();
+  }, []);
+
+  const loadBuildings = async () => {
+    try {
+      const data = await AsyncStorage.getItem("buildings");
+      if (data) setBuildings(JSON.parse(data));
+    } catch (error) {
+      Alert.alert("Error", "Failed to load buildings");
+    }
+  };
+
+  const saveBuildings = async (newBuildings) => {
+    try {
+      await AsyncStorage.setItem("buildings", JSON.stringify(newBuildings));
+      setBuildings(newBuildings);
+    } catch (error) {
+      Alert.alert("Error", "Failed to save buildings");
+    }
+  };
+
+  const addBuilding = (type) => {
+    if(type === "worker_hut" && buildings.filter(b => b.type==="worker_hut").length >= 4){
+      Alert.alert("Limit reached", "Maximum 4 huts allowed");
+      return;
+    }
+    let cost = 0;
+    if(type === "worker_hut" && buildings.length > 0) cost = 1;
+    if(type === "worker_hut" && buildings.length === 0) cost = 0;
+
+    if(resources.crystals < cost){
+      Alert.alert("Not enough crystals");
+      return;
+    }
+
+    const newBuilding = {
+      id: Date.now().toString(),
+      type: type,
+      level: 1,
+      x: 50,
+      y: 50,
+      upgrading: false
     };
 
-    // ----------------------------------------------------
-    // 1. جمع الموارد (Collect Resources)
-    // ----------------------------------------------------
-    const collectResources = () => {
-        const minesCount = base.buildings["Cobalt_Mine"] || 0;
-        let cobaltGain = minesCount * 100;
+    if(cost > 0){
+      setResources(prev => ({...prev, crystals: prev.crystals - cost}));
+    }
 
-        let newCobalt = base.cobalt + cobaltGain;
-        
-        // تطبيق الحد الأقصى للتخزين
-        if (newCobalt > base.max_storage) {
-            cobaltGain = base.max_storage - base.cobalt; // ما تم جمعه فعليًا
-            newCobalt = base.max_storage;
-        }
+    saveBuildings([...buildings, newBuilding]);
+  };
 
-        updateBase({ cobalt: newCobalt });
-        Alert.alert("💰 جمع الموارد", `تم جمع +${cobaltGain} كوبالت تلقائيًا.`);
+  const upgradeBuilding = (building) => {
+    if(building.level >= getMaxLevel(building.type)) {
+      Alert.alert("Max Level Reached");
+      return;
+    }
+
+    let costResource = getUpgradeResource(building.type);
+    let costAmount = 100 * building.level;
+
+    if(resources[costResource] < costAmount){
+      Alert.alert(`Not enough ${costResource}`);
+      return;
+    }
+
+    setResources(prev => ({...prev, [costResource]: prev[costResource]-costAmount}));
+    setBuildings(prev => {
+      const updated = prev.map(b => b.id === building.id ? {...b, upgrading:true} : b);
+      saveBuildings(updated);
+      return updated;
+    });
+
+    setTimeout(() => {
+      setBuildings(prev => {
+        const updated = prev.map(b => {
+          if(b.id === building.id) return {...b, level:b.level+1, upgrading:false};
+          return b;
+        });
+        saveBuildings(updated);
+        return updated;
+      });
+    }, 5000);
+  };
+
+  const getUpgradeResource = (type) => {
+    if(type === "castle") return "cobalt";
+    if(type === "worker_hut") return "crystals";
+    return "mercury";
+  };
+
+  const getMaxLevel = (type) => {
+    const levels = {
+      "castle": 5,
+      "laser_tower": 5,
+      "cannon": 3,
+      "cobalt_mine": 5,
+      "worker_hut": 1,
+      "mercury_extractor": 6,
+      "mercury_storage": 6,
+      "cobalt_storage": 5
     };
+    return levels[type] || 1;
+  };
 
-    // ----------------------------------------------------
-    // 2. بناء منجم كوبالت (Build Mine)
-    // ----------------------------------------------------
-    const buildMine = () => {
-        const costCobalt = 200;
-        const costCrystals = 50;
+  return (
+    <View style={styles.container}>
+      <Text>Resources:</Text>
+      <Text>Cobalt: {resources.cobalt}</Text>
+      <Text>Mercury: {resources.mercury}</Text>
+      <Text>Crystals: {resources.crystals}</Text>
 
-        if (base.cobalt >= costCobalt && base.crystals >= costCrystals) {
-            const newMines = (base.buildings["Cobalt_Mine"] || 0) + 1;
-            
-            updateBase({
-                cobalt: base.cobalt - costCobalt,
-                crystals: base.crystals - costCrystals,
-                max_storage: base.max_storage + 500,
-                buildings: {
-                    ...base.buildings,
-                    "Cobalt_Mine": newMines,
-                }
-            });
-            Alert.alert("✅ نجاح", `تم بناء منجم كوبالت جديد! إجمالي المناجم: ${newMines}`);
-        } else {
-            Alert.alert("❌ خطأ", `لا تملك الموارد الكافية.\nالمطلوب: كوبالت: ${costCobalt}، بلورات: ${costCrystals}`);
-        }
-    };
+      <Map buildings={buildings} setBuildings={setBuildings} upgradeBuilding={upgradeBuilding} />
 
-    // ----------------------------------------------------
-    // 3. بناء برج دفاعي (Build Defense)
-    // ----------------------------------------------------
-    const buildDefense = () => {
-        const costCobalt = 400;
-        const costCrystals = 150;
-        const costFuel = 1;
-
-        if (base.cobalt >= costCobalt && base.crystals >= costCrystals && base.stellar_fuel >= costFuel) {
-            const newTurrets = (base.buildings["Laser_Turret"] || 0) + 1;
-
-            updateBase({
-                cobalt: base.cobalt - costCobalt,
-                crystals: base.crystals - costCrystals,
-                stellar_fuel: base.stellar_fuel - costFuel,
-                buildings: {
-                    ...base.buildings,
-                    "Laser_Turret": newTurrets,
-                }
-            });
-            Alert.alert("✅ نجاح", `تم بناء برج ليزر جديد! إجمالي الأبراج: ${newTurrets}`);
-        } else {
-            Alert.alert("❌ خطأ", `موارد غير كافية.\nالمطلوب: كوبالت: ${costCobalt}، بلورات: ${costCrystals}، وقود نجمي: ${costFuel}`);
-        }
-    };
-
-    // ----------------------------------------------------
-    // 4. تدريب القوات (Train Troops)
-    // ----------------------------------------------------
-    const trainTroops = (trainCount) => {
-        const costCrystals = 10;
-        const totalCost = trainCount * costCrystals;
-        
-        if (base.crystals >= totalCost && trainCount > 0) {
-            const newTroops = (base.troops["Mech_Infantry"] || 0) + trainCount;
-            
-            updateBase({
-                crystals: base.crystals - totalCost,
-                troops: {
-                    ...base.troops,
-                    "Mech_Infantry": newTroops,
-                }
-            });
-            Alert.alert("✅ نجاح", `تم تدريب ${trainCount} من المشاة الآلية بنجاح!`);
-        } else {
-            Alert.alert("❌ خطأ", "موارد غير كافية أو عدد غير صحيح للتدريب.");
-        }
-    };
-
-    // ----------------------------------------------------
-    // 5. شن هجوم (Attack Enemy)
-    // ----------------------------------------------------
-    const attackEnemy = () => {
-        if (base.troops["Mech_Infantry"] === 0) {
-            Alert.alert("❌ خطأ", "لا توجد لديك قوات متاحة للهجوم. قم بالتدريب أولاً.");
-            return;
-        }
-
-        const enemyPower = 5;
-        const defenseBonus = (base.buildings["Laser_Turret"] || 0) * 3;
-        const actualEnemyPower = enemyPower + defenseBonus; 
-        
-        const playerPower = base.troops["Mech_Infantry"] * 1; 
-
-        if (playerPower > actualEnemyPower) {
-            const gainedCobalt = playerPower * 10;
-            const gainedCrystals = playerPower * 2;
-            
-            const troopsLost = Math.floor(base.troops["Mech_Infantry"] * 0.2); 
-            const newTroops = base.troops["Mech_Infantry"] - troopsLost;
-            
-            let newCobalt = base.cobalt + gainedCobalt;
-            let newCrystals = base.crystals + gainedCrystals;
-
-            updateBase({
-                cobalt: Math.min(newCobalt, base.max_storage), // لا تتجاوز الحد الأقصى
-                crystals: newCrystals,
-                troops: {
-                    ...base.troops,
-                    "Mech_Infantry": newTroops,
-                }
-            });
-            Alert.alert("🎉 انتصار ساحق!", `كسبت ${gainedCobalt} كوبالت و ${gainedCrystals} بلورات.\nلكن خسرت ${troopsLost} من المشاة الآلية في المعركة.`);
-        } else {
-            const troopsLost = base.troops["Mech_Infantry"];
-            
-            updateBase({
-                 troops: { ...base.troops, "Mech_Infantry": 0 }
-            });
-            Alert.alert("😔 هزيمة قاسية", `خسرت جميع قواتك (${troopsLost} وحدة) ولم تكسب موارد.`);
-        }
-    };
-    
-    // ----------------------------------------------------
-    // 6. عرض الواجهة الرسومية (The Rendered GUI)
-    // ----------------------------------------------------
-    return (
-        <ScrollView style={styles.container}>
-            <Text style={styles.header}>🚀 حالة القلعة الكونية: {base.name}</Text>
-            
-            {/* --- حالة الموارد --- */}
-            <View style={styles.section}>
-                <Text style={styles.subheader}>الموارد الرئيسية</Text>
-                <Text style={styles.statusText}>الكوبالت: {base.cobalt}/{base.max_storage}</Text>
-                <Text style={styles.statusText}>البلورات: {base.crystals}</Text>
-                <Text style={styles.statusText}>الوقود النجمي: {base.stellar_fuel}</Text>
-            </View>
-
-            {/* --- حالة المباني والقوات --- */}
-            <View style={styles.section}>
-                <Text style={styles.subheader}>المباني</Text>
-                {Object.entries(base.buildings).map(([building, count]) => (
-                    <Text key={building} style={styles.itemText}>- {building}: العدد {count}</Text>
-                ))}
-                
-                <Text style={styles.subheader}>القوات</Text>
-                {Object.entries(base.troops).map(([troop, count]) => (
-                    <Text key={troop} style={styles.itemText}>- {troop}: العدد {count}</Text>
-                ))}
-            </View>
-            
-            {/* --- الأوامر والأزرار --- */}
-            <View style={styles.section}>
-                <Text style={styles.subheader}>قائمة الأوامر</Text>
-                
-                <View style={styles.buttonContainer}>
-                    <Button title="✅ اجمع الموارد" onPress={collectResources} />
-                </View>
-
-                <View style={styles.buttonContainer}>
-                    <Button title="1. بناء منجم كوبالت (200 كوبالت، 50 بلورة)" onPress={buildMine} />
-                </View>
-
-                <View style={styles.buttonContainer}>
-                    <Button title="2. بناء برج ليزر دفاعي (400 كوبالت، 150 بلورة، 1 وقود)" onPress={buildDefense} />
-                </View>
-                
-                <View style={styles.buttonContainer}>
-                    {/* هنا نحتاج إلى إدخال رقم، لكن لتبسيط الأمر، سنضع قيمة ثابتة مؤقتة */}
-                    <Button title="3. تدريب 5 مشاة آلية (50 بلورة)" onPress={() => trainTroops(5)} /> 
-                </View>
-
-                <View style={styles.buttonContainer}>
-                    <Button title="4. شن هجوم (مخاطرة!)" onPress={attackEnemy} color="#ff4444" />
-                </View>
-            </View>
-        </ScrollView>
-    );
+      <Button title="Add Castle" onPress={()=>addBuilding("castle")} />
+      <Button title="Add Laser Tower" onPress={()=>addBuilding("laser_tower")} />
+      <Button title="Add Cannon" onPress={()=>addBuilding("cannon")} />
+      <Button title="Add Cobalt Mine" onPress={()=>addBuilding("cobalt_mine")} />
+      <Button title="Add Worker Hut" onPress={()=>addBuilding("worker_hut")} />
+      <Button title="Add Mercury Extractor" onPress={()=>addBuilding("mercury_extractor")} />
+      <Button title="Add Mercury Storage" onPress={()=>addBuilding("mercury_storage")} />
+      <Button title="Add Cobalt Storage" onPress={()=>addBuilding("cobalt_storage")} />
+    </View>
+  );
 }
 
-// =======================================================
-// التصميم (Styles)
-// =======================================================
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingTop: 60,
-        paddingHorizontal: 15,
-        backgroundColor: '#1c1c1e', // خلفية داكنة
-    },
-    header: {
-        fontSize: 26,
-        fontWeight: 'bold',
-        marginBottom: 20,
-        textAlign: 'center',
-        color: '#fff',
-    },
-    section: {
-        backgroundColor: '#2c2c2e',
-        padding: 15,
-        borderRadius: 10,
-        marginBottom: 15,
-    },
-    subheader: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#8f8f94',
-        marginBottom: 10,
-    },
-    statusText: {
-        fontSize: 16,
-        color: '#fff',
-        lineHeight: 24,
-    },
-    itemText: {
-        fontSize: 14,
-        color: '#d1d1d6',
-        lineHeight: 22,
-    },
-    buttonContainer: {
-        marginVertical: 5,
-    },
+  container: {
+    flex: 1,
+    paddingTop: 50
+  }
 });
-
