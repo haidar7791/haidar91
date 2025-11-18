@@ -1,25 +1,14 @@
+// components/Map.js
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Text } from "react-native";
 import Building from "./Building";
 
-export default function Map({ buildings, setBuildings, saveBuildings }) {
+export default function Map({ buildings, onSelect }) {
   return (
-    <View style={styles.map}>
+    <View style={{ flex: 1, backgroundColor: "#4c7a3d" }}>
       {buildings.map((b) => (
-        <Building
-          key={b.id}
-          building={b}
-          setBuildings={setBuildings}
-          saveBuildings={saveBuildings}
-        />
+        <Building key={b.id} building={b} onSelect={onSelect} />
       ))}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  map: {
-    flex: 1,
-    backgroundColor: "#a3d9a5"
-  }
-});

@@ -1,38 +1,42 @@
+// components/Building.js
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import { View, Image, Text, TouchableOpacity } from "react-native";
+import { BUILDINGS } from "./buildingsData";
 
-export default function Building({ building, setBuildings, saveBuildings }) {
-  const upgrade = () => {
-    const newLevel = building.level + 1;
-    const updatedBuilding = { ...building, level: newLevel };
-    setBuildings(prev => {
-      const other = prev.filter(b => b.id !== building.id);
-      const updated = [...other, updatedBuilding];
-      saveBuildings(updated);
-      return updated;
-    });
-  };
+export default function Building({ building, onSelect }) {
+  const data = BUILDINGS[building.type];
+  const levelInfo = data.levels ? data.levels[building.level] : null;
 
   return (
     <TouchableOpacity
-      style={[styles.building, { left: building.x, top: building.y }]}
-      onPress={upgrade}
+      style={{
+        position: "absolute",
+        left: building.x,
+        top: building.y,
+        alignItems: "center",
+      }}
+      onPress={() => onSelect(building)}
     >
-      <Text>{building.type} Lv{building.level}</Text>
+      <Image
+        source={levelInfo ? levelInfo.image : data.image}
+        style={{ width: 80, height: 80 }}
+        resizeMode="contain"
+      />
+
+      {building.upgrading && (
+        <View
+          style={{
+            backgroundColor: "rgba(0,0,0,0.6)",
+            padding: 4,
+            borderRadius: 4,
+            marginTop: -10,
+          }}
+        >
+          <Text style={{ color: "white", fontSize: 12 }}>
+            {building.remainingTime}s
+          </Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  building: {
-    position: "absolute",
-    width: 60,
-    height: 60,
-    backgroundColor: "#f4e842",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#333",
-    borderRadius: 5
-  }
-});

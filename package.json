@@ -1,8 +1,8 @@
 {
-  "name": "clash_like_village",
+  "name": "space-base-game",
   "version": "1.0.0",
   "private": true,
-  "main": "node_modules/expo/AppEntry.js",
+  "main": "expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -10,15 +10,12 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^1.24.0",
-    "expo": "~48.0.0",
+    "expo": "~54.0.0",
     "react": "18.2.0",
-    "react-native": "0.71.8"
+    "react-native": "0.73.6",
+    "@react-native-async-storage/async-storage": "1.21.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
-  },
-  "expo": {
-    "sdkVersion": "48.0.0"
   }
 }
