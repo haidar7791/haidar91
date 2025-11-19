@@ -62,12 +62,10 @@ export const BUILDINGS = {
       4: { cost: 200, time: 12, image: require("../assets/images/Mercury elixir_4.png") },
       5: { cost: 300, time: 15, image: require("../assets/images/Mercury elixir_5.png") },
     },
-  },
-
-  Elixirstorehouse: {
-    name: "مخزن الزئبق",
-    resource: "mercury",
-    maxLevel: 5,
+"Elixir storehouse": {
+  name: "مخزن الزئبق",
+  resource: "mercury",
+  maxLevel: 5,
     levels: {
       1: { cost: 60, time: 5, image: require("../assets/images/Elixirstorehouse_1.png") },
       2: { cost: 100, time: 7, image: require("../assets/images/Elixirstorehouse_2.png") },
