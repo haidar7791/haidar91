@@ -1,34 +1,41 @@
 {
   "expo": {
     "name": "Space Base Game",
-    "slug": "haidarzaidan",
+    "slug": "space-base-game",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/0e04cdda-97af-4f8c-8423-fd445c8109e3"
+      "url": "https://u.expo.dev/d3a22fce-d013-4ab9-84bd-159d5d418309"
     },
+
     "assetBundlePatterns": [
       "**/*"
     ],
+
     "ios": {
       "supportsTablet": true
     },
+
     "android": {
-      "package": "com.haidar7791.spacebasegame",
+      "package": "com.mohaimenlegend.spacebasegame",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF"
       }
     },
+
     "web": {
       "favicon": "./assets/favicon.png"
     },
+
     "extra": {
       "eas": {
-        "projectId": "0e04cdda-97af-4f8c-8423-fd445c8109e3"
+        "projectId": "d3a22fce-d013-4ab9-84bd-159d5d418309"
       }
     },
+
     "runtimeVersion": {
       "policy": "appVersion"
     }
