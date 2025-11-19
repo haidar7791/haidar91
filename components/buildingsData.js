@@ -64,37 +64,37 @@ export const BUILDINGS = {
     },
   },
 
-  Elixir storehouse: {
+  Elixirstorehouse: {
     name: "مخزن الزئبق",
     resource: "mercury",
     maxLevel: 5,
     levels: {
-      1: { cost: 60, time: 5, image: require("../assets/images/Elixir storehouse_1.png") },
-      2: { cost: 100, time: 7, image: require("../assets/images/Elixir storehouse_2.png") },
-      3: { cost: 150, time: 9, image: require("../assets/images/Elixir storehouse_3.png") },
-      4: { cost: 220, time: 12, image: require("../assets/images/Elixir storehouse_4.png") },
-      5: { cost: 300, time: 15, image: require("../assets/images/Elixir storehouse_5.png") },
+      1: { cost: 60, time: 5, image: require("../assets/images/Elixirstorehouse_1.png") },
+      2: { cost: 100, time: 7, image: require("../assets/images/Elixirstorehouse_2.png") },
+      3: { cost: 150, time: 9, image: require("../assets/images/Elixirstorehouse_3.png") },
+      4: { cost: 220, time: 12, image: require("../assets/images/Elixirstorehouse_4.png") },
+      5: { cost: 300, time: 15, image: require("../assets/images/Elixirstorehouse_5.png") },
     },
   },
 
-  Cobalt warehouse: {
+  Cobaltwarehouse: {
     name: "مخزن الكوبالت",
     resource: "mercury",
     maxLevel: 5,
     levels: {
-      1: { cost: 50, time: 5, image: require("../assets/images/Cobalt warehouse_1.png") },
-      2: { cost: 100, time: 7, image: require("../assets/images/Cobalt warehouse_2.png") },
-      3: { cost: 160, time: 9, image: require("../assets/images/Cobalt warehouse_3.png") },
-      4: { cost: 220, time: 12, image: require("../assets/images/Cobalt warehouse_4.png") },
-      5: { cost: 300, time: 15, image: require("../assets/images/Cobalt warehouse_5.png") },
+      1: { cost: 50, time: 5, image: require("../assets/images/Cobaltwarehouse_1.png") },
+      2: { cost: 100, time: 7, image: require("../assets/images/Cobaltwarehouse_2.png") },
+      3: { cost: 160, time: 9, image: require("../assets/images/Cobaltwarehouse_3.png") },
+      4: { cost: 220, time: 12, image: require("../assets/images/Cobaltwarehouse_4.png") },
+      5: { cost: 300, time: 15, image: require("../assets/images/Cobaltwarehouse_5.png") },
     },
   },
 
-  building hut: {
+  buildinghut: {
     name: "كوخ البناء",
     resource: "crystal",
     maxLevel: 1,
     price: 0, // الأول مجاني
-    image: require("../assets/images/building hut.png"),
+    image: require("../assets/images/buildinghut.png"),
   },
 };
