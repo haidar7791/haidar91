@@ -12,11 +12,11 @@ const buildingsData = {
     resource: "cobalt",
     maxLevel: 5,
     levels: {
-      1: { cost: 100, time: 10, image: require("../assets/images/Town Hall_1.png") },
-      2: { cost: 200, time: 15, image: require("../assets/images/Town Hall_2.png") },
-      3: { cost: 350, time: 20, image: require("../assets/images/Town Hall_3.png") },
-      4: { cost: 600, time: 25, image: require("../assets/images/Town Hall_4.png") },
-      5: { cost: 1000, time: 30, image: require("../assets/images/Town Hall_5.png") }
+      1: { cost: 100, time: 1, image: require("../assets/images/Town Hall_1.png") },
+      2: { cost: 200, time: 120, image: require("../assets/images/Town Hall_2.png") },
+      3: { cost: 1000, time: 240, image: require("../assets/images/Town Hall_3.png") },
+      4: { cost: 2000, time: 400, image: require("../assets/images/Town Hall_4.png") },
+      5: { cost: 5000, time: 800, image: require("../assets/images/Town Hall_5.png") }
     }
   },
 
