@@ -7,15 +7,15 @@ import buildingsData from "./buildingsData";
 
 // قائمة المباني التي يمكن إضافتها
 const availableBuildings = [
-  "Town Hall",
-  "Cobalt",
-  "Cobalt warehouse",
-  "Mercury elixir",
-  "Elixir storehouse",
-  "Laser Tower",
-  "cannon",
-  "Forces camp",
-  "barracks",
+  "Town Hall_1",
+  "Cobalt_1",
+  "Cobalt warehouse_1",
+  "Mercury elixir_1",
+  "Elixir storehouse_1",
+  "Laser Tower_1",
+  "cannon_1",
+  "Forces camp_1",
+  "barracks_1",
   "building hut"
 ];
 
@@ -40,7 +40,7 @@ const Map = () => {
     <View style={styles.container}>
       {/* أرضية اللعبة */}
       <Image
-        source={require("../assets/images/Game floor.jpg")}
+        source={require("../assets/images/Game floor.png")}
         style={styles.gameFloor}
         resizeMode="stretch"
       />
