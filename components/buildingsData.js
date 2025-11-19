@@ -6,11 +6,11 @@ export const BUILDINGS = {
     resource: "cobalt",
     maxLevel: 5,
     levels: {
-      1: { cost: 100, time: 10, image: require("../assets/images/castle_1.png") },
-      2: { cost: 200, time: 15, image: require("../assets/images/castle_2.png") },
-      3: { cost: 350, time: 20, image: require("../assets/images/castle_3.png") },
-      4: { cost: 600, time: 25, image: require("../assets/images/castle_4.png") },
-      5: { cost: 900, time: 30, image: require("../assets/images/castle_5.png") },
+      1: { cost: 100, time: 10, image: require("../assets/images/Town Hall_1.png") },
+      2: { cost: 200, time: 15, image: require("../assets/images/Town Hall_2.png") },
+      3: { cost: 350, time: 20, image: require("../assets/images/Town Hall_3.png") },
+      4: { cost: 600, time: 25, image: require("../assets/images/Town Hall_4.png") },
+      5: { cost: 900, time: 30, image: require("../assets/images/Town Hall_5.png") },
     },
   },
 
@@ -19,11 +19,11 @@ export const BUILDINGS = {
     resource: "mercury",
     maxLevel: 5,
     levels: {
-      1: { cost: 80, time: 5, image: require("../assets/images/laser_1.png") },
-      2: { cost: 120, time: 7, image: require("../assets/images/laser_2.png") },
-      3: { cost: 160, time: 9, image: require("../assets/images/laser_3.png") },
-      4: { cost: 220, time: 12, image: require("../assets/images/laser_4.png") },
-      5: { cost: 300, time: 15, image: require("../assets/images/laser_5.png") },
+      1: { cost: 80, time: 5, image: require("../assets/images/Laser Tower_1.png") },
+      2: { cost: 120, time: 7, image: require("../assets/images/Laser Tower_2.png") },
+      3: { cost: 160, time: 9, image: require("../assets/images/Laser Tower_3.png") },
+      4: { cost: 220, time: 12, image: require("../assets/images/Laser Tower_4.png") },
+      5: { cost: 300, time: 15, image: require("../assets/images/Laser Tower_5.png") },
     },
   },
 
@@ -38,65 +38,63 @@ export const BUILDINGS = {
     },
   },
 
-  cobaltMine: {
-    name: "منجم الكوبالت",
+  cobal: {
+    name: "الكوبالت",
     resource: "mercury",
     maxLevel: 5,
     levels: {
-      1: { cost: 40, time: 5, image: require("../assets/images/cobaltMine_1.png") },
-      2: { cost: 80, time: 7, image: require("../assets/images/cobaltMine_2.png") },
-      3: { cost: 140, time: 10, image: require("../assets/images/cobaltMine_3.png") },
-      4: { cost: 220, time: 12, image: require("../assets/images/cobaltMine_4.png") },
-      5: { cost: 350, time: 15, image: require("../assets/images/cobaltMine_5.png") },
+      1: { cost: 40, time: 5, image: require("../assets/images/cobalt_1.png") },
+      2: { cost: 80, time: 7, image: require("../assets/images/cobalt_2.png") },
+      3: { cost: 140, time: 10, image: require("../assets/images/cobalt_3.png") },
+      4: { cost: 220, time: 12, image: require("../assets/images/cobalt_4.png") },
+      5: { cost: 350, time: 15, image: require("../assets/images/cobalt_5.png") },
     },
   },
 
   mercuryExtractor: {
     name: "مستخرج الزئبق",
     resource: "mercury",
-    maxLevel: 6,
+    maxLevel: 5,
     levels: {
-      1: { cost: 30, time: 5, image: require("../assets/images/mercury_1.png") },
-      2: { cost: 70, time: 7, image: require("../assets/images/mercury_2.png") },
-      3: { cost: 120, time: 9, image: require("../assets/images/mercury_3.png") },
-      4: { cost: 200, time: 12, image: require("../assets/images/mercury_4.png") },
-      5: { cost: 300, time: 15, image: require("../assets/images/mercury_5.png") },
-      6: { cost: 450, time: 18, image: require("../assets/images/mercury_6.png") },
+      1: { cost: 30, time: 5, image: require("../assets/images/Mercury elixir_1.png") },
+      2: { cost: 70, time: 7, image: require("../assets/images/Mercury elixir_2.png") },
+      3: { cost: 120, time: 9, image: require("../assets/images/Mercury elixir_3.png") },
+      4: { cost: 200, time: 12, image: require("../assets/images/Mercury elixir_4.png") },
+      5: { cost: 300, time: 15, image: require("../assets/images/Mercury elixir_5.png") },
     },
   },
 
-  mercuryStorage: {
+  Elixir storehouse: {
     name: "مخزن الزئبق",
     resource: "mercury",
-    maxLevel: 6,
+    maxLevel: 5,
     levels: {
-      1: { cost: 60, time: 5, image: require("../assets/images/mStorage_1.png") },
-      2: { cost: 100, time: 7, image: require("../assets/images/mStorage_2.png") },
-      3: { cost: 150, time: 9, image: require("../assets/images/mStorage_3.png") },
-      4: { cost: 220, time: 12, image: require("../assets/images/mStorage_4.png") },
-      5: { cost: 300, time: 15, image: require("../assets/images/mStorage_5.png") },
-      6: { cost: 400, time: 18, image: require("../assets/images/mStorage_6.png") },
+      1: { cost: 60, time: 5, image: require("../assets/images/Elixir storehouse_1.png") },
+      2: { cost: 100, time: 7, image: require("../assets/images/Elixir storehouse_2.png") },
+      3: { cost: 150, time: 9, image: require("../assets/images/Elixir storehouse_3.png") },
+      4: { cost: 220, time: 12, image: require("../assets/images/Elixir storehouse_4.png") },
+      5: { cost: 300, time: 15, image: require("../assets/images/Elixir storehouse_5.png") },
     },
   },
 
-  cobaltStorage: {
+  Cobalt warehouse: {
     name: "مخزن الكوبالت",
     resource: "mercury",
     maxLevel: 5,
     levels: {
-      1: { cost: 50, time: 5, image: require("../assets/images/cStorage_1.png") },
-      2: { cost: 100, time: 7, image: require("../assets/images/cStorage_2.png") },
-      3: { cost: 160, time: 9, image: require("../assets/images/cStorage_3.png") },
-      4: { cost: 220, time: 12, image: require("../assets/images/cStorage_4.png") },
-      5: { cost: 300, time: 15, image: require("../assets/images/cStorage_5.png") },
+      1: { cost: 50, time: 5, image: require("../assets/images/Cobalt warehouse_1.png") },
+      2: { cost: 100, time: 7, image: require("../assets/images/Cobalt warehouse_2.png") },
+      3: { cost: 160, time: 9, image: require("../assets/images/Cobalt warehouse_3.png") },
+      4: { cost: 220, time: 12, image: require("../assets/images/Cobalt warehouse_4.png") },
+      5: { cost: 300, time: 15, image: require("../assets/images/Cobalt warehouse_5.png") },
     },
   },
 
-  builderHut: {
+  building hut: {
     name: "كوخ البناء",
     resource: "crystal",
     maxLevel: 1,
     price: 0, // الأول مجاني
-    image: require("../assets/images/builder.png"),
+    image: require("../assets/images/building hut.png"),
   },
 };
