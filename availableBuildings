@@ -1,0 +1,14 @@
+// components/availableBuildings.js
+
+export default [
+  "Town Hall",
+  "Cobalt",
+  "Cobalt warehouse",
+  "Mercury elixir",
+  "Elixir storehouse",
+  "Laser Tower",
+  "cannon",
+  "Forces camp",
+  "barracks",
+  "building hut"
+];

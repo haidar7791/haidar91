@@ -161,7 +161,7 @@ const buildingsData = {
   game_floor: {
     key: "game_floor",
     name: "أرضية اللعبة",
-    image: require("../assets/images/Game floor.jpg")
+    image: require("../assets/images/Game floor.png")
   },
 
   // أيقونة التطبيق / Game icon
