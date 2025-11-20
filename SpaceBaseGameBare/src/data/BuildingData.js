@@ -1,16 +1,16 @@
 // src/data/BuildingData.js
 
 export const BUILDINGS = {
-  town Hall: {
-    name: "town Hall",
+  Town Hall: {
+    name: "Town Hall",
     resource: "cobalt",
     maxLevel: 5,
     levels: {
-      1: { cost: 100, time: 10, image: require("../assets/images/town Hall_1.png") },
-      2: { cost: 200, time: 15, image: require("../assets/images/town Hall_2.png") },
-      3: { cost: 350, time: 20, image: require("../assets/images/town Hall_3.png") },
-      4: { cost: 600, time: 25, image: require("../assets/images/town Hall_4.png") },
-      5: { cost: 900, time: 30, image: require("../assets/images/town Hall_5.png") },
+      1: { cost: 100, time: 10, image: require("../assets/images/Town Hall_1.png") },
+      2: { cost: 200, time: 15, image: require("../assets/images/Town Hall_2.png") },
+      3: { cost: 350, time: 20, image: require("../assets/images/Town Hall_3.png") },
+      4: { cost: 600, time: 25, image: require("../assets/images/Town Hall_4.png") },
+      5: { cost: 900, time: 30, image: require("../assets/images/Town Hall_5.png") },
     },
   },
 
