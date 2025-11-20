@@ -34,13 +34,13 @@ export default function App() {
   };
 
   const addBuilding = (type) => {
-    if(type === "worker_hut" && buildings.filter(b => b.type==="worker_hut").length >= 4){
+    if(type === "worker_hut" && buildings.filter(b => b.type==="workerhut").length >= 4){
       Alert.alert("Limit reached", "Maximum 4 huts allowed");
       return;
     }
     let cost = 0;
-    if(type === "worker_hut" && buildings.length > 0) cost = 1;
-    if(type === "worker_hut" && buildings.length === 0) cost = 0;
+    if(type === "worker hut" && buildings.length > 0) cost = 1;
+    if(type === "worker hut" && buildings.length === 0) cost = 0;
 
     if(resources.crystals < cost){
       Alert.alert("Not enough crystals");
@@ -98,20 +98,20 @@ export default function App() {
 
   const getUpgradeResource = (type) => {
     if(type === "castle") return "cobalt";
-    if(type === "worker_hut") return "crystals";
+    if(type === "workerhut") return "crystals";
     return "mercury";
   };
 
   const getMaxLevel = (type) => {
     const levels = {
-      "castle": 5,
-      "laser_tower": 5,
+      "Town Hall": 5,
+      "laser tower": 5,
       "cannon": 3,
-      "cobalt_mine": 5,
-      "worker_hut": 1,
-      "mercury_extractor": 6,
-      "mercury_storage": 6,
-      "cobalt_storage": 5
+      "cobalt": 5,
+      "worker hut": 1,
+      "Mercury elixir": 5,
+      "Elixir storehouse": 5,
+      "cobalt storage": 5
     };
     return levels[type] || 1;
   };
@@ -125,14 +125,14 @@ export default function App() {
 
       <Map buildings={buildings} setBuildings={setBuildings} upgradeBuilding={upgradeBuilding} />
 
-      <Button title="Add Castle" onPress={()=>addBuilding("castle")} />
-      <Button title="Add Laser Tower" onPress={()=>addBuilding("laser_tower")} />
-      <Button title="Add Cannon" onPress={()=>addBuilding("cannon")} />
-      <Button title="Add Cobalt Mine" onPress={()=>addBuilding("cobalt_mine")} />
-      <Button title="Add Worker Hut" onPress={()=>addBuilding("worker_hut")} />
-      <Button title="Add Mercury Extractor" onPress={()=>addBuilding("mercury_extractor")} />
-      <Button title="Add Mercury Storage" onPress={()=>addBuilding("mercury_storage")} />
-      <Button title="Add Cobalt Storage" onPress={()=>addBuilding("cobalt_storage")} />
+      <Button title="Add Town Hall" onPress={()=>addBuilding("Town Hall")} />
+      <Button title="Add laser tower" onPress={()=>addBuilding("laser_tower")} />
+      <Button title="Add cannon" onPress={()=>addBuilding("cannon")} />
+      <Button title="Add cobalt" onPress={()=>addBuilding("cobalt")} />
+      <Button title="Add worker hut" onPress={()=>addBuilding("worker hut")} />
+      <Button title="Add Mercury elixir" onPress={()=>addBuilding("Mercury elixir")} />
+      <Button title="Add Elixir storehouse" onPress={()=>addBuilding("Elixir storehouse")} />
+      <Button title="Add cobalt storage" onPress={()=>addBuilding("cobalt storage")} />
     </View>
   );
 }
