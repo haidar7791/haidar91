@@ -1,7 +1,7 @@
 // src/components/Building.js
 import React from "react";
 import { View, Image, Text, TouchableOpacity } from "react-native";
-import { BUILDINGS } from "./buildingsData";
+import { BUILDINGS } from ".data/buildingsData";
 
 export default function Building({ building, onSelect }) {
   const data = BUILDINGS[building.type];
