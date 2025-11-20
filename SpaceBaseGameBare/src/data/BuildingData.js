@@ -1,4 +1,4 @@
-// components/buildingsData.js
+// src/data/BuildingData.js
 
 export const BUILDINGS = {
   castle: {
