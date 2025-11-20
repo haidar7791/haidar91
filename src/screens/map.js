@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Image, Pressable, StyleSheet, Dimensions } from "react-native";
-import { buildings } from "../data/buildings";
+import { buildings } from "../data/BuildingData.js";
 
 const screenWidth = Dimensions.get("window").width;
 const GRID_SIZE = 14; // حجم الخريطة 14×14
