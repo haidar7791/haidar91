@@ -1,55 +1,57 @@
 // src/store/gameState.js
 
-// الموارد المتوفرة (قد تحتاج إلى تحديث هذه الأرقام بناءً على مخزن اللاعب)
+// الموارد الابتدائية عند بدء اللعبة
 export const initialResources = {
-  cobalt: 500,    // المورد الأول
-  mercury: 200,   // المورد الثاني
-  crystal: 5,     // المورد الثالث (ربما للعمال/الأحجار الكريمة)
-  // يمكنك إضافة موارد أخرى مثل 'timeTokens' أو 'energy'
+  cobalt: 1000,      // كمية الكوبالت الابتدائية
+  mercury: 500,      // كمية الزئبق الابتدائية
+  gold: 1000,        // كمية الذهب الابتدائية
+  elixir: 300        // كمية الإكسير الابتدائية
 };
 
-// هيكل المباني التي بناها اللاعب فعلياً على خريطته
-export const initialPlayerBuildings = [
-  // مثال على مبنى القلعة (castle) الذي يبدأ به اللاعب
+// قائمة المباني التي يمتلكها اللاعب عند بدء اللعبة
+export const initialBuildings = [
   {
-    id: 'b1', // معرّف فريد للمبنى (مهم جداً لحفظ موقعه وتتبعه)
-    type: 'castle', // نوع المبنى (يجب أن يتطابق مع مفاتيح BUILDINGS في BuildingData.js)
-    level: 1, // مستوى المبنى الحالي
-    x: 5,     // موقعه على شبكة الخريطة (أفقي)
-    y: 5,     // موقعه على شبكة الخريطة (عمودي)
-    isUpgrading: false, // هل هو قيد الترقية حالياً؟
-    upgradeFinishTime: null, // متى ينتهي من الترقية (طابع زمني)
-  },
-  
-  // مثال على منجم الزئبق
-  {
-    id: 'b2',
-    type: 'mercuryExtractor',
+    id: 1,
+    type: "Town Hall_1",
     level: 1,
-    x: 3,
-    y: 7,
+    x: 50,        // موقع المبنى على الخريطة
+    y: 50,
     isUpgrading: false,
-    upgradeFinishTime: null,
+    upgradeEndTime: null
   },
-  
-  // مثال على كوخ البناء (يجب أن يكون له موقع ثابت)
   {
-    id: 'b3',
-    type: 'builderHut',
-    level: 1, // في حال كان له مستويات
-    x: 8,
-    y: 1,
+    id: 2,
+    type: "Cobalt_1",
+    level: 1,
+    x: 150,
+    y: 60,
     isUpgrading: false,
-    upgradeFinishTime: null,
+    upgradeEndTime: null
+  },
+  {
+    id: 3,
+    type: "Mercury elixir_1",
+    level: 1,
+    x: 100,
+    y: 200,
+    isUpgrading: false,
+    upgradeEndTime: null
+  },
+  {
+    id: 4,
+    type: "barracks_1",
+    level: 1,
+    x: 200,
+    y: 150,
+    isUpgrading: false,
+    upgradeEndTime: null
   }
+  // يمكن إضافة المزيد من المباني حسب الخريطة والتصميم
 ];
 
-// حالة اللاعب الكلية (تستخدم لاحقاً في Context أو Redux)
+// الحالة الابتدائية الكاملة للعبة
 export const initialGameState = {
   resources: initialResources,
-  buildings: initialPlayerBuildings,
-  // يمكنك إضافة بيانات أخرى هنا مثل:
-  // troops: [ ... ], // وحدات الجيش
-  // score: 0, // نقاط اللاعب
+  buildings: initialBuildings,
+  lastUpdateTime: Date.now() // لتتبع الوقت بين جلسات اللعب
 };
-
