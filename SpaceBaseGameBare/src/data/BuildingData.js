@@ -1,34 +1,34 @@
 // src/data/BuildingData.js
 
 export const BUILDINGS = {
-  townHall: {
-    name: "قاعدة القلعة",
+  town Hall: {
+    name: "town Hall",
     resource: "cobalt",
     maxLevel: 5,
     levels: {
-      1: { cost: 100, time: 10, image: require("../assets/images/townHall_1.png") },
-      2: { cost: 200, time: 15, image: require("../assets/images/townHall_2.png") },
-      3: { cost: 350, time: 20, image: require("../assets/images/townHall_3.png") },
-      4: { cost: 600, time: 25, image: require("../assets/images/townHall_4.png") },
-      5: { cost: 900, time: 30, image: require("../assets/images/townHall_5.png") },
+      1: { cost: 100, time: 10, image: require("../assets/images/town Hall_1.png") },
+      2: { cost: 200, time: 15, image: require("../assets/images/town Hall_2.png") },
+      3: { cost: 350, time: 20, image: require("../assets/images/town Hall_3.png") },
+      4: { cost: 600, time: 25, image: require("../assets/images/town Hall_4.png") },
+      5: { cost: 900, time: 30, image: require("../assets/images/town Hall_5.png") },
     },
   },
 
-  laserTower: {
-    name: "برج الليزر",
+  laser Tower: {
+    name: "laser Tower",
     resource: "mercury",
     maxLevel: 5,
     levels: {
-      1: { cost: 80, time: 5, image: require("../assets/images/laser_1.png") },
-      2: { cost: 120, time: 7, image: require("../assets/images/laser_2.png") },
-      3: { cost: 160, time: 9, image: require("../assets/images/laser_3.png") },
-      4: { cost: 220, time: 12, image: require("../assets/images/laser_4.png") },
-      5: { cost: 300, time: 15, image: require("../assets/images/laser_5.png") },
+      1: { cost: 80, time: 5, image: require("../assets/images/laser Tower_1.png") },
+      2: { cost: 120, time: 7, image: require("../assets/images/laser Tower_2.png") },
+      3: { cost: 160, time: 9, image: require("../assets/images/laser Tower_3.png") },
+      4: { cost: 220, time: 12, image: require("../assets/images/laser Tower_4.png") },
+      5: { cost: 300, time: 15, image: require("../assets/images/laser Tower_5.png") },
     },
   },
 
   cannon: {
-    name: "المدفع",
+    name: "cannon",
     resource: "mercury",
     maxLevel: 3,
     levels: {
@@ -39,7 +39,7 @@ export const BUILDINGS = {
   },
 
   Cobalt: {
-    name: "منجم الكوبالت",
+    name: "Cobalt",
     resource: "mercury",
     maxLevel: 5,
     levels: {
@@ -52,7 +52,7 @@ export const BUILDINGS = {
   },
 
   Mercury elixir: {
-    name: "مستخرج الزئبق",
+    name: "Mercury elixir",
     resource: "mercury",
     maxLevel: 5,
     levels: {
@@ -65,7 +65,7 @@ export const BUILDINGS = {
   },
 
   Elixir storehouse: {
-    name: "مخزن الزئبق",
+    name: "Elixir storehouse",
     resource: "mercury",
     maxLevel: 5,
     levels: {
@@ -78,7 +78,7 @@ export const BUILDINGS = {
   },
 
   Cobalt warehouse: {
-    name: "مخزن الكوبالت",
+    name: "Cobalt warehouse",
     resource: "mercury",
     maxLevel: 5,
     levels: {
@@ -91,7 +91,7 @@ export const BUILDINGS = {
   },
 
   building hut: {
-    name: "كوخ البناء",
+    name: "building hut",
     resource: "crystal",
     maxLevel: 1,
     price: 0, // الأول مجاني
