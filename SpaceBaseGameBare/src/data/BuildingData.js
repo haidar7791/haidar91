@@ -54,28 +54,26 @@ export const BUILDINGS = {
   mercuryExtractor: {
     name: "مستخرج الزئبق",
     resource: "mercury",
-    maxLevel: 6,
+    maxLevel: 5,
     levels: {
       1: { cost: 30, time: 5, image: require("../assets/images/mercury_1.png") },
       2: { cost: 70, time: 7, image: require("../assets/images/mercury_2.png") },
       3: { cost: 120, time: 9, image: require("../assets/images/mercury_3.png") },
       4: { cost: 200, time: 12, image: require("../assets/images/mercury_4.png") },
       5: { cost: 300, time: 15, image: require("../assets/images/mercury_5.png") },
-      6: { cost: 450, time: 18, image: require("../assets/images/mercury_6.png") },
     },
   },
 
   mercuryStorage: {
     name: "مخزن الزئبق",
     resource: "mercury",
-    maxLevel: 6,
+    maxLevel: 5,
     levels: {
       1: { cost: 60, time: 5, image: require("../assets/images/mStorage_1.png") },
       2: { cost: 100, time: 7, image: require("../assets/images/mStorage_2.png") },
       3: { cost: 150, time: 9, image: require("../assets/images/mStorage_3.png") },
       4: { cost: 220, time: 12, image: require("../assets/images/mStorage_4.png") },
       5: { cost: 300, time: 15, image: require("../assets/images/mStorage_5.png") },
-      6: { cost: 400, time: 18, image: require("../assets/images/mStorage_6.png") },
     },
   },
 
