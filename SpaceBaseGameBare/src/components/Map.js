@@ -1,157 +1,167 @@
-import React, { useState } from "react";
-import { View, Image, StyleSheet, TouchableOpacity, Modal, Text, FlatList, Alert } from "react-native";
-
-import { BUILDINGS } from "../data/BuildingData";
-
-const availableBuildings = [
-  "Town Hall",
-  "Cobalt",
-  "Cobalt warehouse",
-  "Mercury elixir",
-  "Elixir storehouse",
-  "Laser Tower",
-  "cannon",
-  "Forces camp",
-  "barracks",
-  "building hut"
-];
+// components/Map.js
+import React, { useState, useEffect } from "react";
+import { View, Image, Pressable, StyleSheet } from "react-native";
+import ResourceBar from "./ResourceBar";
+import UpgradePopup from "./UpgradePopup";
+import buildingsData from "../buildingsData";
+import { Audio } from "expo-av";
 
 const Map = () => {
-  const [shopVisible, setShopVisible] = useState(false);
+  const [placedBuildings, setPlacedBuildings] = useState([]);
+  const [selectedBuilding, setSelectedBuilding] = useState(null);
 
-  const renderBuildingItem = ({ item }) => {
-    // تم تصحيح هذا السطر لاستخدام BUILDINGS المستورد
-    const buildingLevels = BUILDINGS[item]?.levels;
-    if (!buildingLevels) return null;
+  // تحميل الأصوات
+  const sounds = {
+    click: require("../assets/sounds/click.mp3"),
+    place: require("../assets/sounds/place.mp3"),
+    upgrade: require("../assets/sounds/upgrade.mp3"),
+    error: require("../assets/sounds/error.mp3"),
+    collect: require("../assets/sounds/collect.mp3"),
+    menu_open: require("../assets/sounds/menu_open.mp3"),
+    menu_close: require("../assets/sounds/menu_close.mp3"),
+    bg_loop: require("../assets/sounds/bg_loop.mp3"),
+  };
 
-    const level1Image = buildingLevels[1]?.image;
+  const playSound = async (name) => {
+    try {
+      const sound = new Audio.Sound();
+      await sound.loadAsync(sounds[name]);
+      await sound.playAsync();
+    } catch (e) {
+      console.log("Sound error:", e);
+    }
+  };
 
-    return (
-      <View style={styles.buildingItem}>
-        <Image source={level1Image} style={styles.buildingImage} />
-        <Text style={styles.buildingName}>{item}</Text>
-      </View>
+  // تشغيل الموسيقى الخلفية
+  useEffect(() => {
+    let bgSound = new Audio.Sound();
+
+    const playBg = async () => {
+      try {
+        await bgSound.loadAsync(sounds.bg_loop);
+        await bgSound.setIsLoopingAsync(true);
+        await bgSound.setVolumeAsync(0.4);
+        await bgSound.playAsync();
+      } catch (e) {
+        console.log("BG Sound error:", e);
+      }
+    };
+
+    playBg();
+
+    return () => {
+      bgSound.unloadAsync();
+    };
+  }, []);
+
+  // إضافة مبنى جديد
+  const addBuilding = (type, x, y) => {
+    const buildingInfo = buildingsData[type];
+    if (!buildingInfo) {
+      playSound("error");
+      return;
+    }
+
+    const newBuilding = {
+      id: Date.now(),
+      type,
+      level: 1,
+      x,
+      y,
+      isUpgrading: false,
+      upgradeFinishTime: null,
+    };
+
+    setPlacedBuildings((prev) => [...prev, newBuilding]);
+
+    playSound("place");
+  };
+
+  // الضغط على الخريطة
+  const handleMapPress = (event) => {
+    const { locationX, locationY } = event.nativeEvent;
+
+    // مبنى افتراضي — سيتم لاحقًا ربط المباني من القائمة
+    addBuilding("Town Hall_1", locationX, locationY);
+  };
+
+  // الضغط على مبنى
+  const handleBuildingPress = (building) => {
+    playSound("click");
+    setSelectedBuilding(building);
+  };
+
+  // عملية الترقية
+  const upgradeBuilding = (id) => {
+    setPlacedBuildings((prev) =>
+      prev.map((b) =>
+        b.id === id
+          ? { ...b, level: b.level + 1 }
+          : b
+      )
     );
+
+    playSound("upgrade");
   };
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../../assets/images/Game_floor.jpg")} 
-        style={styles.gameFloor} 
-        resizeMode="stretch"
-      />
+      <ResourceBar />
 
-      <TouchableOpacity
-        style={styles.shopButton}
-        onPress={() => setShopVisible(true)}
-      >
+      <Pressable style={styles.mapContainer} onPress={handleMapPress}>
         <Image
-          source={require("../assets/images/Game icon.png")}
-          style={styles.shopIcon}
+          source={require("../assets/images/Game_floor.jpg")}
+          style={styles.mapImage}
         />
-      </TouchableOpacity>
 
-      <Modal
-        visible={shopVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShopVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>المتجر</Text>
-            <FlatList
-              data={availableBuildings}
-              keyExtractor={(item) => item}
-              renderItem={renderBuildingItem}
-              contentContainerStyle={styles.buildingList}
-            />
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShopVisible(false)}
+        {placedBuildings.map((b) => {
+          const sprite = buildingsData[b.type]?.sprite;
+
+          return (
+            <Pressable
+              key={b.id}
+              onPress={() => handleBuildingPress(b)}
+              style={{
+                position: "absolute",
+                left: b.x - 40,
+                top: b.y - 40,
+              }}
             >
-              <Text style={styles.closeText}>إغلاق</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+              <Image
+                source={sprite}
+                style={{ width: 80, height: 80 }}
+              />
+            </Pressable>
+          );
+        })}
+      </Pressable>
+
+      {selectedBuilding && (
+        <UpgradePopup
+          building={selectedBuilding}
+          onClose={() => {
+            playSound("menu_close");
+            setSelectedBuilding(null);
+          }}
+          onUpgrade={() => upgradeBuilding(selectedBuilding.id)}
+        />
+      )}
     </View>
   );
 };
-
-export default Map;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  gameFloor: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  },
-  shopButton: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#FFD700",
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-  },
-  shopIcon: {
-    width: 40,
-    height: 40,
-  },
-  modalOverlay: {
+  mapContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  modalContent: {
-    width: '85%',
-    maxHeight: '70%',
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  buildingList: {
-    paddingBottom: 20,
-  },
-  buildingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  buildingImage: {
-    width: 50,
-    height: 50,
-    marginRight: 10,
-  },
-  buildingName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  closeButton: {
-    marginTop: 10,
-    backgroundColor: "#FF6347",
-    padding: 10,
-    borderRadius: 10,
-    alignSelf: 'center',
-  },
-  closeText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  mapImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
 });
+
+export default Map;
