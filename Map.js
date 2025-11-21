@@ -41,7 +41,7 @@ const Map = () => {
     <View style={styles.container}>
       {/* أرضية اللعبة */}
       <Image
-        source={require("../assets/images/Game floor.png")} // الاسم الفعلي للصورة
+        source={require("../assets/images/Gamefloor.png")} // الاسم الفعلي للصورة
         style={styles.gameFloor}
         resizeMode="stretch"
       />

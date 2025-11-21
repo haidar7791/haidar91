@@ -16,7 +16,7 @@ import { initialGameState } from "./src/store/gameState";
 
 // Preload list — must match files in ./assets/images and ./assets/sounds
 const IMAGE_ASSETS = [
-  require("./assets/images/Game floor.png"),
+  require("./assets/images/Gamefloor.png"),
   require("./assets/images/Game icon.png"),
   require("./assets/images/Town Hall_1.png"),
   require("./assets/images/Town Hall_2.png"),

@@ -26,7 +26,7 @@ const Map = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../assets/images/Game floor.png")}
+        source={require("../assets/images/Gamefloor.png")}
         style={styles.gameFloor}
         resizeMode="stretch"
       />

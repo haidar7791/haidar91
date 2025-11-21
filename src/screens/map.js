@@ -27,7 +27,7 @@ export default function MapScreen() {
     <View style={styles.container}>
       {/* صورة أرضية اللعبة */}
       <Image
-        source={require("../../assets/images/Game floor.png")}
+        source={require("../../assets/images/Gamefloor.png")}
         style={styles.mapBackground}
       />
 

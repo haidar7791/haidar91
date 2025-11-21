@@ -110,7 +110,7 @@ const Map = () => {
 
       <Pressable style={styles.mapContainer} onPress={handleMapPress}>
         <Image
-          source={require("../assets/images/Game floor.png")}
+          source={require("../assets/images/Gamefloor.png")}
           style={styles.mapImage}
         />
 
