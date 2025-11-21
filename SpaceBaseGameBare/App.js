@@ -1,138 +1,303 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Button, StyleSheet, Alert } from "react-native";
+// App.js
+import React, { useEffect, useState, useRef } from "react";
+import { View, StyleSheet, StatusBar, ActivityIndicator, Platform } from "react-native";
+import { Asset } from "expo-asset";
+import * as SplashScreen from "expo-splash-screen";
+import { Audio } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import Map from "./components/Map";
+import ResourceBar from "./components/ResourceBar";
+import UpgradePopup from "./components/UpgradePopup";
+import ShopItem from "./components/ShopItem";
+import TimerDisplay from "./components/TimerDisplay";
+
+import { initialGameState } from "./src/store/gameState";
+
+// Preload list — must match files in ./assets/images and ./assets/sounds
+const IMAGE_ASSETS = [
+  require("./assets/images/Game floor.png"),
+  require("./assets/images/Game icon.png"),
+  require("./assets/images/Town Hall_1.png"),
+  require("./assets/images/Town Hall_2.png"),
+  require("./assets/images/Town Hall_3.png"),
+  require("./assets/images/Town Hall_4.png"),
+  require("./assets/images/Town Hall_5.png"),
+  require("./assets/images/Cobalt_1.png"),
+  require("./assets/images/Cobalt_2.png"),
+  require("./assets/images/Cobalt_3.png"),
+  require("./assets/images/Cobalt_4.png"),
+  require("./assets/images/Cobalt_5.png"),
+  require("./assets/images/Cobalt warehouse_1.png"),
+  require("./assets/images/Cobalt warehouse_2.png"),
+  require("./assets/images/Cobalt warehouse_3.png"),
+  require("./assets/images/Cobalt warehouse_4.png"),
+  require("./assets/images/Cobalt warehouse_5.png"),
+  require("./assets/images/Mercury elixir_1.png"),
+  require("./assets/images/Mercury elixir_2.png"),
+  require("./assets/images/Mercury elixir_3.png"),
+  require("./assets/images/Mercury elixir_4.png"),
+  require("./assets/images/Mercury elixir_5.png"),
+  require("./assets/images/Elixir storehouse_1.png"),
+  require("./assets/images/Elixir storehouse_2.png"),
+  require("./assets/images/Elixir storehouse_3.png"),
+  require("./assets/images/Elixir storehouse_4.png"),
+  require("./assets/images/Elixir storehouse_5.png"),
+  require("./assets/images/Laser Tower_1.png"),
+  require("./assets/images/Laser Tower_2.png"),
+  require("./assets/images/Laser Tower_3.png"),
+  require("./assets/images/Laser Tower_4.png"),
+  require("./assets/images/Laser Tower_5.png"),
+  require("./assets/images/cannon_1.png"),
+  require("./assets/images/cannon_2.png"),
+  require("./assets/images/cannon_3.png"),
+  require("./assets/images/Forces camp_1.png"),
+  require("./assets/images/Forces camp_2.png"),
+  require("./assets/images/barracks_1.png"),
+  require("./assets/images/barracks_2.png"),
+  require("./assets/images/barracks_3.png"),
+  require("./assets/images/building hut.png"),
+];
+
+const SOUND_ASSETS = {
+  bg: require("./assets/sounds/bg_loop.mp3"),
+  click: require("./assets/sounds/click.mp3"),
+  place: require("./assets/sounds/place.mp3"),
+  collect: require("./assets/sounds/collect.mp3"),
+};
 
 export default function App() {
-  const [buildings, setBuildings] = useState([]);
-  const [resources, setResources] = useState({
-    cobalt: 1000,
-    mercury: 500,
-    crystals: 10
-  });
+  const [appReady, setAppReady] = useState(false);
+  const [gameState, setGameState] = useState(initialGameState);
+  const [soundOn, setSoundOn] = useState(true);
+  const bgSoundRef = useRef(null);
+  const clickSoundRef = useRef(null);
+  const placeSoundRef = useRef(null);
+  const collectSoundRef = useRef(null);
 
+  // preload assets and sounds
   useEffect(() => {
-    loadBuildings();
+    let mounted = true;
+
+    async function prepare() {
+      try {
+        await SplashScreen.preventAutoHideAsync();
+
+        // preload images
+        const imagePromises = IMAGE_ASSETS.map((img) => Asset.fromModule(img).downloadAsync());
+        await Promise.all(imagePromises);
+
+        // preload sounds
+        const { bg, click, place, collect } = SOUND_ASSETS;
+
+        bgSoundRef.current = new Audio.Sound();
+        clickSoundRef.current = new Audio.Sound();
+        placeSoundRef.current = new Audio.Sound();
+        collectSoundRef.current = new Audio.Sound();
+
+        await bgSoundRef.current.loadAsync(bg);
+        await clickSoundRef.current.loadAsync(click);
+        await placeSoundRef.current.loadAsync(place);
+        await collectSoundRef.current.loadAsync(collect);
+
+        // set looping bg and start if soundOn
+        await bgSoundRef.current.setIsLoopingAsync(true);
+        if (soundOn) {
+          await bgSoundRef.current.playAsync();
+        }
+
+        // load saved state if exists
+        const saved = await AsyncStorage.getItem("gameState_v1");
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (mounted) setGameState(parsed);
+          } catch (e) {
+            // ignore parse errors — keep default initialGameState
+          }
+        }
+      } catch (e) {
+        // ignore preload errors but still continue
+        console.warn("Asset/sound preload error:", e);
+      } finally {
+        if (mounted) {
+          setAppReady(true);
+          await SplashScreen.hideAsync();
+        }
+      }
+    }
+
+    prepare();
+
+    return () => {
+      mounted = false;
+      // unload sounds
+      (async () => {
+        try {
+          if (bgSoundRef.current) await bgSoundRef.current.unloadAsync();
+          if (clickSoundRef.current) await clickSoundRef.current.unloadAsync();
+          if (placeSoundRef.current) await placeSoundRef.current.unloadAsync();
+          if (collectSoundRef.current) await collectSoundRef.current.unloadAsync();
+        } catch (e) {}
+      })();
+    };
   }, []);
 
-  const loadBuildings = async () => {
-    try {
-      const data = await AsyncStorage.getItem("buildings");
-      if (data) setBuildings(JSON.parse(data));
-    } catch (error) {
-      Alert.alert("Error", "Failed to load buildings");
-    }
-  };
+  // auto-save gameState periodically
+  useEffect(() => {
+    const id = setInterval(async () => {
+      try {
+        await AsyncStorage.setItem("gameState_v1", JSON.stringify(gameState));
+      } catch (e) {
+        console.warn("Save failed", e);
+      }
+    }, 5000); // every 5s
 
-  const saveBuildings = async (newBuildings) => {
-    try {
-      await AsyncStorage.setItem("buildings", JSON.stringify(newBuildings));
-      setBuildings(newBuildings);
-    } catch (error) {
-      Alert.alert("Error", "Failed to save buildings");
-    }
-  };
+    return () => clearInterval(id);
+  }, [gameState]);
 
-  const addBuilding = (type) => {
-    if(type === "worker_hut" && buildings.filter(b => b.type==="worker_hut").length >= 4){
-      Alert.alert("Limit reached", "Maximum 4 huts allowed");
-      return;
-    }
-    let cost = 0;
-    if(type === "worker_hut" && buildings.length > 0) cost = 1;
-    if(type === "worker_hut" && buildings.length === 0) cost = 0;
-
-    if(resources.crystals < cost){
-      Alert.alert("Not enough crystals");
-      return;
-    }
-
-    const newBuilding = {
-      id: Date.now().toString(),
-      type: type,
-      level: 1,
-      x: 50,
-      y: 50,
-      upgrading: false
-    };
-
-    if(cost > 0){
-      setResources(prev => ({...prev, crystals: prev.crystals - cost}));
-    }
-
-    saveBuildings([...buildings, newBuilding]);
-  };
-
-  const upgradeBuilding = (building) => {
-    if(building.level >= getMaxLevel(building.type)) {
-      Alert.alert("Max Level Reached");
-      return;
-    }
-
-    let costResource = getUpgradeResource(building.type);
-    let costAmount = 100 * building.level;
-
-    if(resources[costResource] < costAmount){
-      Alert.alert(`Not enough ${costResource}`);
-      return;
-    }
-
-    setResources(prev => ({...prev, [costResource]: prev[costResource]-costAmount}));
-    setBuildings(prev => {
-      const updated = prev.map(b => b.id === building.id ? {...b, upgrading:true} : b);
-      saveBuildings(updated);
-      return updated;
+  // sound toggle
+  const toggleSound = async () => {
+    setSoundOn((prev) => {
+      const next = !prev;
+      (async () => {
+        try {
+          if (next) {
+            if (bgSoundRef.current) await bgSoundRef.current.playAsync();
+          } else {
+            if (bgSoundRef.current) await bgSoundRef.current.pauseAsync();
+          }
+        } catch (e) {}
+      })();
+      return next;
     });
+  };
 
-    setTimeout(() => {
-      setBuildings(prev => {
-        const updated = prev.map(b => {
-          if(b.id === building.id) return {...b, level:b.level+1, upgrading:false};
+  // small helpers to play SFX
+  const playClick = async () => {
+    try {
+      if (soundOn && clickSoundRef.current) {
+        await clickSoundRef.current.replayAsync();
+      }
+    } catch (e) {}
+  };
+  const playPlace = async () => {
+    try {
+      if (soundOn && placeSoundRef.current) {
+        await placeSoundRef.current.replayAsync();
+      }
+    } catch (e) {}
+  };
+  const playCollect = async () => {
+    try {
+      if (soundOn && collectSoundRef.current) {
+        await collectSoundRef.current.replayAsync();
+      }
+    } catch (e) {}
+  };
+
+  // Expose addBuilding, upgradeBuilding etc. to Map and children via props
+  const addBuilding = (type, x, y) => {
+    playPlace();
+    setGameState((prev) => {
+      const nextId = prev.buildings.length ? Math.max(...prev.buildings.map((b) => b.id)) + 1 : 1;
+      const newB = {
+        id: nextId,
+        type,
+        level: 1,
+        x,
+        y,
+        isUpgrading: false,
+        upgradeEndTime: null,
+      };
+      return { ...prev, buildings: [...prev.buildings, newB] };
+    });
+  };
+
+  const startUpgrade = (buildingId, durationSeconds, costResource) => {
+    setGameState((prev) => {
+      const buildings = prev.buildings.map((b) => {
+        if (b.id === buildingId) {
+          const end = Date.now() + durationSeconds * 1000;
+          return { ...b, isUpgrading: true, upgradeEndTime: end };
+        }
+        return b;
+      });
+      // deduct cost if resource exists
+      const resources = { ...prev.resources };
+      if (costResource && resources[costResource.type] >= costResource.amount) {
+        resources[costResource.type] -= costResource.amount;
+      }
+      return { ...prev, buildings, resources };
+    });
+  };
+
+  const collectResources = (amounts) => {
+    playCollect();
+    setGameState((prev) => {
+      const resources = { ...prev.resources };
+      for (const key of Object.keys(amounts)) {
+        resources[key] = (resources[key] || 0) + amounts[key];
+      }
+      return { ...prev, resources };
+    });
+  };
+
+  // finish upgrades if time passed
+  useEffect(() => {
+    const id = setInterval(() => {
+      setGameState((prev) => {
+        const now = Date.now();
+        let changed = false;
+        const buildings = prev.buildings.map((b) => {
+          if (b.isUpgrading && b.upgradeEndTime && now >= b.upgradeEndTime) {
+            changed = true;
+            return { ...b, isUpgrading: false, upgradeEndTime: null, level: b.level + 1 };
+          }
           return b;
         });
-        saveBuildings(updated);
-        return updated;
+        if (changed) return { ...prev, buildings };
+        return prev;
       });
-    }, 5000);
-  };
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
 
-  const getUpgradeResource = (type) => {
-    if(type === "castle") return "cobalt";
-    if(type === "worker_hut") return "crystals";
-    return "mercury";
-  };
-
-  const getMaxLevel = (type) => {
-    const levels = {
-      "castle": 5,
-      "laser_tower": 5,
-      "cannon": 3,
-      "cobalt_mine": 5,
-      "worker_hut": 1,
-      "mercury_extractor": 6,
-      "mercury_storage": 6,
-      "cobalt_storage": 5
-    };
-    return levels[type] || 1;
-  };
+  if (!appReady) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+        <StatusBar barStyle="dark-content" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text>Resources:</Text>
-      <Text>Cobalt: {resources.cobalt}</Text>
-      <Text>Mercury: {resources.mercury}</Text>
-      <Text>Crystals: {resources.crystals}</Text>
+      <StatusBar hidden={false} />
+      <ResourceBar
+        resources={gameState.resources}
+        onToggleSound={toggleSound}
+        soundOn={soundOn}
+        onCollect={() => {
+          // example collect action
+          collectResources({ cobalt: 10, mercury: 5 });
+        }}
+      />
 
-      <Map buildings={buildings} setBuildings={setBuildings} upgradeBuilding={upgradeBuilding} />
+      <Map
+        gameState={gameState}
+        onAddBuilding={addBuilding}
+        onStartUpgrade={startUpgrade}
+        onPlayClick={playClick}
+      />
 
-      <Button title="Add Castle" onPress={()=>addBuilding("castle")} />
-      <Button title="Add Laser Tower" onPress={()=>addBuilding("laser_tower")} />
-      <Button title="Add Cannon" onPress={()=>addBuilding("cannon")} />
-      <Button title="Add Cobalt Mine" onPress={()=>addBuilding("cobalt_mine")} />
-      <Button title="Add Worker Hut" onPress={()=>addBuilding("worker_hut")} />
-      <Button title="Add Mercury Extractor" onPress={()=>addBuilding("mercury_extractor")} />
-      <Button title="Add Mercury Storage" onPress={()=>addBuilding("mercury_storage")} />
-      <Button title="Add Cobalt Storage" onPress={()=>addBuilding("cobalt_storage")} />
+      <UpgradePopup
+        // hookup basic props; actual popup controlled inside Map or Building components
+        onConfirmUpgrade={(buildingId, duration, cost) => startUpgrade(buildingId, duration, cost)}
+      />
+
+      {/* Other UI components can be placed globally here */}
     </View>
   );
 }
@@ -140,6 +305,11 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50
-  }
+    backgroundColor: "#eef2f5",
+  },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

@@ -1,4 +1,6 @@
 // components/availableBuildings.js
+
+// قائمة المباني التي يمكن إضافتها على أرضية اللعبة
 const availableBuildings = [
   "Town Hall_1",
   "Cobalt_1",

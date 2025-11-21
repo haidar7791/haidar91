@@ -1,42 +1,37 @@
 // components/Building.js
 import React from "react";
-import { View, Image, Text, TouchableOpacity } from "react-native";
+import { View, Image, Text, StyleSheet } from "react-native";
 import { BUILDINGS } from "./buildingsData";
 
-export default function Building({ building, onSelect }) {
+export default function Building({ building }) {
+  if (!building) return null;
+
   const data = BUILDINGS[building.type];
-  const levelInfo = data.levels ? data.levels[building.level] : null;
+  if (!data) return null;
+
+  const levelInfo = data.levels?.[building.level] || data.levels?.[1];
+  if (!levelInfo) return null;
 
   return (
-    <TouchableOpacity
-      style={{
-        position: "absolute",
-        left: building.x,
-        top: building.y,
-        alignItems: "center",
-      }}
-      onPress={() => onSelect(building)}
-    >
-      <Image
-        source={levelInfo ? levelInfo.image : data.image}
-        style={{ width: 80, height: 80 }}
-        resizeMode="contain"
-      />
-
-      {building.upgrading && (
-        <View
-          style={{
-            backgroundColor: "rgba(0,0,0,0.6)",
-            padding: 4,
-            borderRadius: 4,
-            marginTop: -10,
-          }}
-        >
-          <Text style={{ color: "white", fontSize: 12 }}>
-            {building.remainingTime}s
-          </Text>
-        </View>
-      )}
-    </TouchableOpacity>
+    <View style={styles.container}>
+      <Image source={levelInfo.image} style={styles.image} />
+      <Text style={styles.label}>{building.type}</Text>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    margin: 5,
+  },
+  image: {
+    width: 50,
+    height: 50,
+  },
+  label: {
+    marginTop: 2,
+    fontSize: 12,
+    fontWeight: "500",
+  },
+});
