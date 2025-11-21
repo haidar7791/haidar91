@@ -1,11 +1,8 @@
-// components/Map.js
 import React, { useState } from "react";
-import { View, Image, StyleSheet, TouchableOpacity, Modal, Text, FlatList } from "react-native";
+import { View, Image, StyleSheet, TouchableOpacity, Modal, Text, FlatList, Alert } from "react-native";
 
-// استدعاء بيانات المباني
 import { BUILDINGS } from "../data/BuildingData";
 
-// قائمة المباني المتاحة للإضافة على أرضية اللعبة
 const availableBuildings = [
   "Town Hall",
   "Cobalt",
@@ -23,11 +20,11 @@ const Map = () => {
   const [shopVisible, setShopVisible] = useState(false);
 
   const renderBuildingItem = ({ item }) => {
-    // الحصول على بيانات المبنى من buildingsData
-    const buildingLevels = buildingsData[item]?.levels;
-    if (!buildingLevels) return null; // إذا لم توجد بيانات للمبنى
+    // تم تصحيح هذا السطر لاستخدام BUILDINGS المستورد
+    const buildingLevels = BUILDINGS[item]?.levels;
+    if (!buildingLevels) return null;
 
-    const level1Image = buildingLevels[1]?.image; // مستوى 1 فقط
+    const level1Image = buildingLevels[1]?.image;
 
     return (
       <View style={styles.buildingItem}>
@@ -39,14 +36,12 @@ const Map = () => {
 
   return (
     <View style={styles.container}>
-      {/* أرضية اللعبة */}
       <Image
-        source={require("../../assets/images/Game_floor.jpg")} // الاسم الفعلي للصورة
-        style={styles.game_Floor}
+        source={require("../../assets/images/Game_floor.jpg")} 
+        style={styles.gameFloor} 
         resizeMode="stretch"
       />
 
-      {/* زر المتجر (المطرقة) */}
       <TouchableOpacity
         style={styles.shopButton}
         onPress={() => setShopVisible(true)}
@@ -57,7 +52,6 @@ const Map = () => {
         />
       </TouchableOpacity>
 
-      {/* نافذة المتجر */}
       <Modal
         visible={shopVisible}
         transparent={true}
