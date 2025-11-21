@@ -7,15 +7,15 @@ import { BUILDINGS } from "../data/BuildingData";
 
 // قائمة المباني المتاحة للإضافة على أرضية اللعبة
 const availableBuildings = [
-  "Town Hall_1",
-  "Cobalt_1",
-  "Cobalt warehouse_1",
-  "Mercury elixir_1",
-  "Elixir storehouse_1",
-  "Laser Tower_1",
-  "cannon_1",
-  "Forces camp_1",
-  "barracks_1",
+  "Town Hall",
+  "Cobalt",
+  "Cobalt warehouse",
+  "Mercury elixir",
+  "Elixir storehouse",
+  "Laser Tower",
+  "cannon",
+  "Forces camp",
+  "barracks",
   "building hut"
 ];
 
