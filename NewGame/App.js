@@ -5,17 +5,17 @@ import * as SplashScreen from "expo-splash-screen";
 import { Audio } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import Map from "./components/Map";
-import ResourceBar from "./components/ResourceBar";
-import UpgradePopup from "./components/UpgradePopup";
-import ShopItem from "./components/ShopItem";
-import TimerDisplay from "./components/TimerDisplay";
+import Map from "./src/components/Map";
+import ResourceBar from "./src/components/ResourceBar";
+import UpgradePopup from "./src/components/UpgradePopup";
+import ShopItem from "./src/components/ShopItem";
+import TimerDisplay from "./src/components/TimerDisplay";
 
 import { initialGameState } from "./src/store/gameState";
 
 // Preload list — must match files in ./assets/images and ./assets/sounds
 const IMAGE_ASSETS = [
-  require("./assets/images/Game floor.png"),
+  require("./assets/images/Game_floor.jpg"),
   require("./assets/images/Game icon.png"),
   require("./assets/images/Town Hall_1.png"),
   require("./assets/images/Town Hall_2.png"),

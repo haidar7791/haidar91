@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "h",
+    "name": "حروب الفضا",
     "slug": "NewGame",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Game icon.png",
-    "scheme": "newgame",
+    "scheme": "./assets/images/Town Hall_5.png",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/Game_floor.jpg",
