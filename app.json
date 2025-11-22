@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "حروب الفضا",
+    "slug": "NewGame",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/Game icon.png",
+    "scheme": "./assets/images/Town Hall_5.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/Game_floor.jpg",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourname.newgame"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/android-icon-foregro.png",
+        "backgroundColor": "#E6F4FE"
+      },
+      "package": "com.yourname.newgame",
+      "versionCode": 1,
+      "edgeToEdgeEnabled": true,
+      "enableProguardInReleaseBuilds": false
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
