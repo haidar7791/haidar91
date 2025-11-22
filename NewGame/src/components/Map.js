@@ -82,7 +82,7 @@ const Map = () => {
     const { locationX, locationY } = event.nativeEvent;
 
     // مبنى افتراضي — سيتم لاحقًا ربط المباني من القائمة
-    addBuilding("Town Hall_1", locationX, locationY);
+    addBuilding("Town_Hall_1", locationX, locationY);
   };
 
   // الضغط على مبنى
@@ -110,7 +110,7 @@ const Map = () => {
 
       <Pressable style={styles.mapContainer} onPress={handleMapPress}>
         <Image
-          source={require("../assets/images/Game_floor.jpg")}
+          source={require("../../assets/images/Game_floor.jpg")}
           style={styles.mapImage}
         />
 
