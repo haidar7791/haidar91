@@ -12,14 +12,14 @@ const Map = () => {
 
   // تحميل الأصوات
   const sounds = {
-    click: require("../assets/sounds/click.mp3"),
-    place: require("../assets/sounds/place.mp3"),
-    upgrade: require("../assets/sounds/upgrade.mp3"),
-    error: require("../assets/sounds/error.mp3"),
-    collect: require("../assets/sounds/collect.mp3"),
-    menu_open: require("../assets/sounds/menu_open.mp3"),
-    menu_close: require("../assets/sounds/menu_close.mp3"),
-    bg_loop: require("../assets/sounds/bg_loop.mp3"),
+    click: require("../../assets/sounds/click.mp3"),
+    place: require("../../assets/sounds/place.mp3"),
+    upgrade: require("../../assets/sounds/upgrade.mp3"),
+    error: require("../../assets/sounds/error.mp3"),
+    collect: require("../../assets/sounds/collect.mp3"),
+    menu_open: require("../../assets/sounds/menu_open.mp3"),
+    menu_close: require("../../assets/sounds/menu_close.mp3"),
+    bg_loop: require("../../assets/sounds/bg_loop.mp3"),
   };
 
   const playSound = async (name) => {
