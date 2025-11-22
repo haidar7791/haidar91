@@ -1,6 +1,6 @@
 // ui/ShopItem.js
 
-import { formatNumber } from "../utils/FormatUtils.js";
+import { formatNumber } from "../../utils/FormatUtils.js";
 
 export default class ShopItem {
   constructor(scene, x, y, data, onPurchase) {
