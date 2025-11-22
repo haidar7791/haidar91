@@ -2,11 +2,11 @@
   "expo": {
     "name": "Rynox",
     "slug": "NewGame",
-    "entryPoint": "NewGame/App.js",
+    "entryPoint": "./App.js",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Game_icon.png",
-    "scheme": "./assets/images/Town Hall_5.png",
+    "scheme": "Rynox",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/Game_floor.jpg",
@@ -19,7 +19,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/android-icon-foregro.png",
+        "foregroundImage": "./assets/images/Game_icon.png",
         "backgroundColor": "#E6F4FE"
       },
       "package": "com.yourname.newgame",
