@@ -1,6 +1,6 @@
 // ui/TimerDisplay.js
 
-import { formatTime } from "../utils/TimeUtils.js";
+import { formatTime } from "../../utils/TimeUtils.js";
 
 export default class TimerDisplay {
   constructor(scene, x, y, totalSeconds) {
