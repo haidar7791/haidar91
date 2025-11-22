@@ -2,6 +2,7 @@
   "expo": {
     "name": "حروب الفضا",
     "slug": "NewGame",
+    "entryPoint": "NewGame/App.js",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Game icon.png",
