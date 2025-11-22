@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { View, Image, Pressable, StyleSheet } from "react-native";
 import ResourceBar from "./ResourceBar";
 import UpgradePopup from "./UpgradePopup";
-import buildingsData from "../buildingsData";
+import buildingsData from "../data/BuildingData.js";
 import { Audio } from "expo-av";
 
 const Map = () => {
