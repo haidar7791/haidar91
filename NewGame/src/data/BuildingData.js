@@ -14,16 +14,16 @@ export const BUILDINGS = {
     },
   },
 
-  laser_Tower: {
-    name: "laser_Tower",
+  Laser_Tower: {
+    name: "Laser_Tower",
     resource: "mercury",
     maxLevel: 5,
     levels: {
-      1: { cost: 80, time: 5, image: require("../../assets/images/laser_Tower_1.png") },
-      2: { cost: 120, time: 7, image: require("../../assets/images/laser_Tower_2.png") },
-      3: { cost: 160, time: 9, image: require("../../assets/images/laser_Tower_3.png") },
-      4: { cost: 220, time: 12, image: require("../../assets/images/laser_Tower_4.png") },
-      5: { cost: 300, time: 15, image: require("../../assets/images/laser_Tower_5.png") },
+      1: { cost: 80, time: 5, image: require("../../assets/images/Laser_Tower_1.png") },
+      2: { cost: 120, time: 7, image: require("../../assets/images/Laser_Tower_2.png") },
+      3: { cost: 160, time: 9, image: require("../../assets/images/Laser_Tower_3.png") },
+      4: { cost: 220, time: 12, image: require("../../assets/images/Laser_Tower_4.png") },
+      5: { cost: 300, time: 15, image: require("../../assets/images/Laser_Tower_5.png") },
     },
   },
 
