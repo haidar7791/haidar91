@@ -5,7 +5,7 @@
     "entryPoint": "NewGame/App.js",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Game icon.png",
+    "icon": "./assets/images/Game_icon.png",
     "scheme": "./assets/images/Town Hall_5.png",
     "userInterfaceStyle": "automatic",
     "splash": {
