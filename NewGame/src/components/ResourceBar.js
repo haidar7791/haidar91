@@ -1,6 +1,6 @@
 // ui/ResourceBar.js
 
-import { formatNumber } from "../utils/FormatUtils.js";
+import { formatNumber } from "../../utils/FormatUtils.js";
 
 export default class ResourceBar {
   constructor(scene, initialResources = {}) {
@@ -8,10 +8,10 @@ export default class ResourceBar {
 
     // الموارد المتاحة في اللعبة
     this.resources = {
-      mercury: 0,
-      cobalt: 0,
-      uranium: 0,
-      gold: 0,
+      mercury: 100,
+      cobalt: 100,
+      uranium: 10,
+      gold: 10,
       ...initialResources
     };
 
