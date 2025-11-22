@@ -2,17 +2,16 @@
 
 // الموارد الابتدائية عند بدء اللعبة
 export const initialResources = {
-  cobalt: 1000,      // كمية الكوبالت الابتدائية
-  mercury: 500,      // كمية الزئبق الابتدائية
-  gold: 1000,        // كمية الذهب الابتدائية
-  elixir: 300        // كمية الإكسير الابتدائية
+  cobalt: 100,      // كمية الكوبالت الابتدائية
+  mercury: 100,      // كمية الزئبق الابتدائية
+  gold: 10,        // كمية الذهب الابتدائية
 };
 
 // قائمة المباني التي يمتلكها اللاعب عند بدء اللعبة
 export const initialBuildings = [
   {
     id: 1,
-    type: "Town Hall_1",
+    type: "Town_Hall_1",
     level: 1,
     x: 50,        // موقع المبنى على الخريطة
     y: 50,
@@ -30,7 +29,7 @@ export const initialBuildings = [
   },
   {
     id: 3,
-    type: "Mercury elixir_1",
+    type: "Mercury_elixir_1",
     level: 1,
     x: 100,
     y: 200,
