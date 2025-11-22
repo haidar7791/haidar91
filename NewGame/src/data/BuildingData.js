@@ -43,11 +43,11 @@ export const BUILDINGS = {
     resource: "mercury",
     maxLevel: 5,
     levels: {
-      1: { cost: 40, time: 5, image: require("../../assets/images/cobalt_1.png") },
-      2: { cost: 80, time: 7, image: require("../../assets/images/cobalt_2.png") },
-      3: { cost: 140, time: 10, image: require("../../assets/images/cobalt_3.png") },
-      4: { cost: 220, time: 12, image: require("../../assets/images/cobalt_4.png") },
-      5: { cost: 350, time: 15, image: require("../../assets/images/cobalt_5.png") },
+      1: { cost: 40, time: 5, image: require("../../assets/images/Cobalt_1.png") },
+      2: { cost: 80, time: 7, image: require("../../assets/images/Cobalt_2.png") },
+      3: { cost: 140, time: 10, image: require("../../assets/images/Cobalt_3.png") },
+      4: { cost: 220, time: 12, image: require("../../assets/images/Cobalt_4.png") },
+      5: { cost: 350, time: 15, image: require("../../assets/images/Cobalt_5.png") },
     },
   },
 
