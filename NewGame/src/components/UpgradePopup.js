@@ -1,6 +1,6 @@
 // ui/UpgradePopup.js
 
-import { formatNumber } from "../utils/FormatUtils.js";
+import { formatNumber } from "../../utils/FormatUtils.js";
 
 export default class UpgradePopup {
   constructor(scene) {
