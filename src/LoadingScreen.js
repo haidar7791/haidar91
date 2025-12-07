@@ -3,13 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import * as Font from "expo-font"; // هذا استيراد لمكتبة خارجية، يجب أن يبقى
-
-// 🛑🛑🛑 استيراد الدوال المساعدة من ملف الإدارة المركزي 🛑🛑🛑
-import {
-  storage, // نستخدمه هنا ككائن فضاء اسم (Namespace Object)
-} from "./exports"; 
-// 🛑🛑🛑 نهاية الاستيراد المركزي 🛑🛑🛑
-
+import * as storage from './storage';
 // نفترض أن useNavigation هي دالة خارجية من مكتبة React Navigation
 import { useNavigation } from "@react-navigation/native"; 
 

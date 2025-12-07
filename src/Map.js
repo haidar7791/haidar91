@@ -1,4 +1,5 @@
-// Map.js — نسخة مستقرة 100% بعد إصلاح خطأ duplicate keys
+// src/Map.js — نسخة كاملة مصححة 100%
+
 import React, { useState, useCallback } from "react";
 import { View, StyleSheet, Dimensions, Image } from "react-native";
 
@@ -47,7 +48,7 @@ export default function Map({
 
       return (
         <MovableBuilding
-          key={String(b.id) + "_" + b.type} // ← إصلاح المفتاح نهائياً
+          key={String(b.id) + "_" + b.type}
           building={b}
           buildingData={buildingData}
           tileSize={TILE_SIZE}
@@ -119,9 +120,10 @@ export default function Map({
           building={selectedBuilding}
           buildingData={BUILDINGS[selectedBuilding.type]}
           currentResources={gameState.resources}
+          currentTime={Date.now()}
           onClose={() => setSelectedBuilding(null)}
-          onUpgrade={(id) => {
-            onStartUpgrade(id);
+          onUpgrade={(buildingId, durationMs, costObj) => {
+            onStartUpgrade(buildingId, durationMs, costObj);
             setSelectedBuilding(null);
           }}
         />

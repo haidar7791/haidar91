@@ -26,15 +26,12 @@ import {
 import { getFirestore, doc, setDoc, onSnapshot } from "firebase/firestore";
 
 // 🟢 استيراد الوحدات
-import {
-  useGameLogic,
-  Map,
-  ResourceBar,
-  ShopBar,
-  BUILDINGS,
-  MAP_TILES_X,
-  MAP_TILES_Y,
-} from "./src/exports";
+import useGameLogic from './src/useGameLogic';
+import Map from './src/Map';
+import ResourceBar from './src/ResourceBar';
+import ShopBar from './src/ShopBar';
+import { BUILDINGS } from './src/BuildingData';
+import { MAP_TILES_X, MAP_TILES_Y } from './src/MapConfig';
 
 const { height } = Dimensions.get("window");
 

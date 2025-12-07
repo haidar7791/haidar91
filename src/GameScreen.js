@@ -3,73 +3,54 @@
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, StatusBar, Text } from "react-native";
 
-// 🛑🛑🛑 استيراد جميع المكونات والدوال المساعدة من ملف الإدارة المركزي 🛑🛑🛑
-import {
-  // المكونات
-  Map,
-  ResourceBar,
-  ShopBar,
-  BuildingInfoPanel,
-  TroopTrainingPanel,
-
-  // الدوال المساعدة ومنطق اللعبة
-  useGameLogic,
-  storage, // نستخدمه هنا باسمه الأصلي (storage)
-  // BuildingData, // افتراض أن BuildingData مُستوردة لتمكين منطق الترقية في BuildingInfoPanel
-} from "./exports";
-// 🛑🛑🛑 نهاية الاستيراد المركزي 🛑🛑🛑
+import Map from "./Map";
+import ResourceBar from "./ResourceBar";
+import ShopBar from "./ShopBar";
+import TroopTrainingPanel from "./TroopTrainingPanel";
+import useGameLogic from "./useGameLogic";
+import * as storage from "./storage";
+import UpgradePopup from "./UpgradePopup";
+import { BUILDINGS } from "./BuildingData";
+import * as TimeUtils from "./TimeUtils";
 
 export default function GameScreen() {
-  // 1. حالة التحميل والبيانات المحفوظة
   const [loadedState, setLoadedState] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load save file on mount (التحميل يتم قبل تهيئة منطق اللعبة)
+  // حالة محلية لاختيار المبنى — الآن يديرها GameScreen
+  const [selectedBuilding, setSelectedBuilding] = useState(null);
+  const [isTrainingOpen, setTrainingOpen] = useState(false);
+
   useEffect(() => {
     (async () => {
       try {
-        // 🛑 الخطوة الحاسمة: تحميل الحالة من التخزين
         const saved = await storage.loadGameState();
-        setLoadedState(saved); // تخزين الحالة المحملة
+        setLoadedState(saved || null);
       } catch (e) {
         console.error("Failed to load game state:", e);
-        // في حال فشل التحميل، يتم استخدام null (لتشغيل الحالة الأولية في useGameLogic)
         setLoadedState(null);
       } finally {
-        setIsLoading(false); // تم الانتهاء من التحميل (سواء بنجاح أو فشل)
+        setIsLoading(false);
       }
     })();
   }, []);
 
-  // 2. تمرير الحالة المحملة إلى Hook منطق اللعبة
+  // استخدام hook منطق اللعبة — ملاحظة: واجهة useGameLogic تعيد { gameState, addBuilding, startUpgrade, ... }
   const {
-    // تم حذف المباني والموارد من `useGameLogic` للحصول على نظافة الكود 
-    // يجب تمريرهم الى useGameLogic لكي يكون الكود قابل للقراءة
-    buildings,
-    selectedBuilding,
-    setSelectedBuilding,
-    resources,
-    // الدوال التي تم استيرادها مسبقًا:
-    addResource,
-    spendResource,
-    troops,
-    trainTroop,
-    canTrain,
-    isShopOpen,
-    setShopOpen,
-    isTrainingOpen,
-    setTrainingOpen,
-    camera,
-    setCamera,
-    isPlacingBuilding,
-    startPlacingBuilding,
-    finalizePlacement,
-    cancelPlacement,
-    // يجب التأكد من تمرير هذه الدوال الجديدة من useGameLogic:
-    startUpgrade, // لترقية المبنى
-  } = useGameLogic(loadedState); // 🛑 تمرير loadedState كمدخل
+    gameState,
+    addBuilding,
+    startUpgrade,
+    moveBuilding,
+    collectResources,
+  } = useGameLogic(loadedState);
 
-  // 3. عرض مؤشر التحميل
+  // استخرج القيم التي نحتاجها من gameState
+  const buildings = gameState?.buildings || [];
+  const resources = gameState?.resources || {};
+  const camera = gameState?.camera || null;
+  // دوال وضع/هدم/فتح المتجر وغيرها قد تُكمل لاحقاً إذا كانت في hook
+
+  // مؤشر التحميل
   if (isLoading) {
     return (
       <View style={[styles.container, styles.loadingOverlay]}>
@@ -86,11 +67,10 @@ export default function GameScreen() {
       <Map
         buildings={buildings}
         camera={camera}
-        setCamera={setCamera}
-        onSelectBuilding={setSelectedBuilding}
-        isPlacingBuilding={isPlacingBuilding}
-        finalizePlacement={finalizePlacement}
-        cancelPlacement={cancelPlacement}
+        // إذا ضغط اللاعب على مبنى نضعه كـ selectedBuilding ليظهر popup
+        onSelectBuilding={(b) => setSelectedBuilding(b)}
+        // إذا كان لديك دوال كاميرا / وضع مباني مرّرها هنا
+        onMoveBuilding={moveBuilding}
       />
 
       {/* ================== RESOURCE BAR ================== */}
@@ -98,31 +78,36 @@ export default function GameScreen() {
 
       {/* ================== SHOP BAR ================== */}
       <ShopBar
-        isOpen={isShopOpen}
-        setOpen={setShopOpen}
-        startPlacingBuilding={startPlacingBuilding}
+        // إن أردت ربط فتح المتجر تُدرج الحالات المناسبة
+        startPlacingBuilding={(type) => {
+          // مثال: ابدأ وضع مبنى من المتجر
+          // يمكنك استدعاء addBuilding لاحقًا عند تأكيد الموقع
+        }}
         resources={resources}
       />
 
-      {/* ================== BUILDING INFO PANEL (نافذة معلومات وترقية المبنى) ================== */}
-      {/* 🛑 يجب ربط الدالة startUpgrade هنا 🛑 */}
+      {/* ================== BUILDING INFO / UPGRADE POPUP ================== */}
       {selectedBuilding && !isTrainingOpen && (
-        <BuildingInfoPanel
+        <UpgradePopup
           building={selectedBuilding}
-          close={() => setSelectedBuilding(null)}
-          spendResource={spendResource}
-          resources={resources}
-          // 💡 تمرير دالة بدء الترقية إلى اللوحة
-          onUpgrade={startUpgrade} 
+          buildingData={BUILDINGS[selectedBuilding.type]}
+          onClose={() => setSelectedBuilding(null)}
+          // onUpgrade expects (buildingId, durationMs, costObj)
+          onUpgrade={(buildingId, durationMs, costObj) => {
+            // تمرير الطلب إلى useGameLogic.startUpgrade
+            startUpgrade(buildingId, durationMs, costObj);
+            // أغلق اللوحة بعد بدء الترقية (اختياري)
+            setSelectedBuilding(null);
+          }}
+          currentResources={resources}
+          currentTime={TimeUtils.now()}
         />
       )}
 
       {/* ================== TROOP TRAINING PANEL ================== */}
       {isTrainingOpen && (
         <TroopTrainingPanel
-          troops={troops}
-          canTrain={canTrain}
-          trainTroop={trainTroop}
+          // مرّر دوال التدريب حسب واجهة مشروعك
           close={() => setTrainingOpen(false)}
         />
       )}
@@ -130,20 +115,18 @@ export default function GameScreen() {
   );
 }
 
-// -------------------------------------
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
   },
   loadingOverlay: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#333',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#333",
   },
   loadingText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-  }
+  },
 });

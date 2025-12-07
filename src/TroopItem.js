@@ -1,7 +1,7 @@
 //src/TroopItem.js
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
-import { TROOPS } from "./exports";
+import Troop from './Troop';
 
 export default function TroopItem({ troopId, onTrain }) {
   const troop = TROOPS[troopId];

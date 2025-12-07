@@ -6,13 +6,9 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 
-// 🛑🛑🛑 استيراد جميع البيانات والدوال المساعدة من ملف الإدارة المركزي 🛑🛑🛑
-import {
-  TROOPS_DATA,      // بيانات القوات (تم استيرادها بهذا الاسم من exports.js)
-  troopsManager,    // إدارة تدريب القوات (كائن فضاء اسم)
-  storage,          // دوال الحفظ والتحميل (كائن فضاء اسم)
-  // تم تجاهل استيراد gameState لأنه غير مستخدم في المنطق الحالي.
-} from "./exports"; // المسار الافتراضي لملف الإدارة
+import { TROOPS_DATA } from './TroopsData';
+import BuildingsManager from './buildingsManager';
+import * as storage from './storage';
 
 export default function TroopTrainingPanel({ onClose }) {
   // 🛑 تم تغيير TROOPS إلى TROOPS_DATA ليتوافق مع الاستيراد المركزي

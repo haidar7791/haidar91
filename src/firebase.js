@@ -1,54 +1,49 @@
 /* src/firebase.js */
+
 import { initializeApp } from "firebase/app";
 import {
-    getAuth,
-    signInAnonymously,
-    signInWithCustomToken,
-    onAuthStateChanged,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signOut,
-    sendPasswordResetEmail,
-    updateProfile
+  getAuth,
+  signInAnonymously,
+  signInWithCustomToken,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+  updateProfile
 } from "firebase/auth";
 
 import { getFirestore } from "firebase/firestore";
 
-// قراءة الإعداد
-let firebaseConfig = null;
+/* --- الإعدادات (ضع بيانات مشروعك من Firebase Console) --- */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
 
-try {
-    if (typeof __firebase_config !== "undefined") {
-        firebaseConfig = JSON.parse(__firebase_config);
-    }
-} catch (err) {
-    console.warn("Invalid config:", err);
-}
+/* --- تهيئة Firebase --- */
+const app = initializeApp(firebaseConfig);
 
-// تهيئة التطبيق
-let app = null;
-let auth = null;
-let db = null;
+/* --- الخدمات --- */
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-if (firebaseConfig) {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-} else {
-    console.warn("Firebase config missing!");
-}
-
+/* --- التصدير --- */
 export {
-    app,
-    auth,
-    db,
-    getAuth,
-    signInAnonymously,
-    signInWithCustomToken,
-    onAuthStateChanged,
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signOut,
-    sendPasswordResetEmail,
-    updateProfile
+  app,
+  auth,
+  db,
+  getAuth,
+  signInAnonymously,
+  signInWithCustomToken,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+  updateProfile
 };

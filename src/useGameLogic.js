@@ -4,10 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import buildingsManager from "./buildingsManager"
 import { BUILDINGS } from "./BuildingData"
 import * as TimeUtils from './TimeUtils';
-import {
-  gameState,
-  Building as BuildingClass,
-} from "./exports";
+import * as gameState from './gameState';
+import BuildingClass from './Building';
 
 const useGameLogic = (initialSavedState) => {
   const [currentGameState, setGameState] = useState(

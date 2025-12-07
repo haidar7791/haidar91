@@ -12,12 +12,9 @@ import {
   Image, 
   Text,
 } from "react-native";
-import { 
-  MAP_TILES_X, 
-  MAP_TILES_Y, 
-  placementUtils, 
-  BUILDINGS,
-} from "./exports"; 
+import { BUILDINGS } from './BuildingData';
+import { MAP_TILES_X, MAP_TILES_Y } from './MapConfig';
+import * as placementUtils from './placementUtils';
 
 const TILE_SIZE = 80;
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");

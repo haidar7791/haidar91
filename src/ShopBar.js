@@ -12,7 +12,7 @@ import {
   Image,
   ScrollView,
 } from "react-native";
-import { BUILDINGS } from "./exports";
+import { BUILDINGS } from './BuildingData';
 
 const { width } = Dimensions.get("window");
 
