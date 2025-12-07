@@ -1,22 +1,23 @@
 // src/gameState.js
-// هذا الملف مسؤول عن تعريف الحالة الأولية للعبة وإدارة الحفظ/التحميل (AsyncStorage).
+// مسؤول عن الحالة الأولية وحفظ/تحميل الحالة (AsyncStorage)
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as TimeUtils from './TimeUtils';
 
 export const TOWN_HALL_ID = "Town_Hall";
-const GAME_STATE_KEY = '@MyApp:gameState'; // مفتاح التخزين
+const GAME_STATE_KEY = '@MyApp:gameState_v1';
 
-// تعريف الحالة الأولية - هذه القيم تظهر عند أول تشغيل للعبة
+// الحالة الابتدائية
 export const initialGameState = {
   resources: {
-    Cobalt: 500, // الموارد الأولية: مهمة لظهور شريط الموارد ResourceBar
+    Cobalt: 500,
     Elixir: 500,
     Crystal: 50,
   },
   storageCapacity: {
     Cobalt: 1000,
     Elixir: 1000,
-    Crystal: 50,
+    Crystal: 100,
   },
   buildings: [
     {
@@ -27,60 +28,61 @@ export const initialGameState = {
       y: 5,
       isUpgrading: false,
       upgradeFinishTime: null,
+      isBuilding: false,
+      buildFinishTime: null,
     },
     {
       id: "hut_001",
       type: "Builder_Hut",
       level: 1,
-      x: 4,
-      y: 4,
+      x: 3,
+      y: 5,
       isUpgrading: false,
       upgradeFinishTime: null,
+      isBuilding: false,
+      buildFinishTime: null,
     },
   ],
   totalBuilders: 1,
   availableBuilders: 1,
-  lastUpdateTime: Date.now(),
+  lastUpdateTime: TimeUtils.now(), // seconds
 };
 
-// الدالة المطلوبة من useGameLogic.js لتهيئة الحالة الأولية
+// دالة للحصول على الحالة الابتدائية (مستخدمة في useGameLogic)
 export const getInitialState = () => {
-    return initialGameState;
+  return initialGameState;
 };
 
-/**
- * دالة لحفظ حالة اللعبة الحالية بشكل دائم باستخدام AsyncStorage.
- * @param {object} gameState - كائن حالة اللعبة الذي سيتم حفظه.
- */
-export const saveGameState = async (gameState) => {
-    try {
-        const jsonValue = JSON.stringify(gameState);
-        await AsyncStorage.setItem(GAME_STATE_KEY, jsonValue);
-        console.log(`[GameState] State saved successfully to AsyncStorage.`);
-    } catch (e) {
-        console.error("[GameState] Error saving state:", e);
-    }
+// حفظ الحالة إلى AsyncStorage
+export const saveGameState = async (state) => {
+  try {
+    const jsonValue = JSON.stringify(state);
+    await AsyncStorage.setItem(GAME_STATE_KEY, jsonValue);
+    // console.log("[gameState] saved");
+  } catch (e) {
+    console.error("[gameState] save error:", e);
+  }
 };
 
-/**
- * دالة لتحميل حالة اللعبة بشكل غير متزامن.
- * @returns {Promise<object>} كائن حالة اللعبة المحملة أو الحالة الأولية (initialGameState) إذا لم يكن هناك بيانات سابقة.
- */
+// تحميل الحالة من AsyncStorage (إرجاع الحالة الابتدائية إن لم توجد)
 export const loadGameState = async () => {
-    try {
-        const jsonValue = await AsyncStorage.getItem(GAME_STATE_KEY);
-        
-        if (jsonValue !== null) {
-            // تحويل السلسلة النصية إلى كائن JavaScript
-            console.log(`[GameState] State loaded successfully from AsyncStorage.`);
-            return JSON.parse(jsonValue);
-        } else {
-            console.warn(`[GameState] No existing state found. Returning initial state.`);
-            return getInitialState(); // إذا لم نجد بيانات، نرجع الحالة الأولية
-        }
-    } catch (e) {
-        console.error("[GameState] Error loading state:", e);
-        // في حال حدوث خطأ في القراءة، نرجع الحالة الأولية لتجنب تعطل التطبيق
-        return getInitialState();
+  try {
+    const jsonValue = await AsyncStorage.getItem(GAME_STATE_KEY);
+    if (jsonValue !== null) {
+      const parsed = JSON.parse(jsonValue);
+      // ensure lastUpdateTime exists
+      if (!parsed.lastUpdateTime) parsed.lastUpdateTime = TimeUtils.now();
+      // console.log("[gameState] loaded");
+      return parsed;
     }
+  } catch (e) {
+    console.error("[gameState] load error:", e);
+  }
+  return getInitialState();
+};
+
+export default {
+  getInitialState,
+  saveGameState,
+  loadGameState,
 };
