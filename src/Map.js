@@ -1,24 +1,16 @@
-// Map.js (الشبكة النشطة مائلة 45 درجة داخليًا)
+// Map.js — نسخة خالية من الإيزومتريك + استيرادات مباشرة وصحيحة
 
-import React, { useState, useCallback, useRef, useMemo } from "react";
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  Image,
-} from "react-native";
-import {
-  MAP_TILES_X,
-  MAP_TILES_Y,
-  BuildingInfoPanel,
-  MovableBuilding,
-  Camera,
-  BUILDINGS,
-  TimeUtils,
-  ShopButton,
-  BuildingPlacement, 
-} from "./exports";
+import React, { useState, useCallback, useMemo } from "react";
+import { View, StyleSheet, Dimensions, Image } from "react-native";
+
+// ⚠️ استيرادات مباشرة من الملفات الأصلية وليس exports.js
+import MovableBuilding from "./MovableBuilding";
+import BuildingPlacement from "./BuildingPlacement";
+import Camera from "./Camera";
+import BuildingInfoPanel from "./BuildingInfoPanel";
+import ShopButton from "./ShopButton";
+import BUILDINGS from "./BuildingData";
+import TimeUtils from "./TimeUtils";
 
 const { width: screenW, height: screenH } = Dimensions.get("window");
 
@@ -28,40 +20,32 @@ const MAP_HEIGHT = screenH;
 const ACTIVE_ZONE_PERCENT = 0.99;
 const ACTIVE_SIZE = Math.floor(screenW * ACTIVE_ZONE_PERCENT);
 
-const TILE_SIZE = ACTIVE_SIZE / MAP_TILES_X;
+const TILE_SIZE = ACTIVE_SIZE / 20; // عدد مربعات الشبكة (عدّل إذا لزم)
 
 export default function Map({
   gameState,
   onStartUpgrade,
   onMoveBuilding,
-  onPlayClick,
   onOpenShop,
   onConfirmPlacement,
   onCancelPlacement,
 }) {
   const [selectedBuilding, setSelectedBuilding] = useState(null);
   const [buildingToMove, setBuildingToMove] = useState(null);
-  const [currentCameraOffset, setCurrentCameraOffset] = useState({
-    x: 0,
-    y: 0,
-  });
-  
-  const [buildingToPlaceType, setBuildingToPlaceType] = useState(null); 
+  const [buildingToPlaceType, setBuildingToPlaceType] = useState(null);
+
+  const [currentCameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
 
   const handleCameraOffsetChange = useCallback((offset) => {
-    setCurrentCameraOffset(offset);
+    setCameraOffset(offset);
   }, []);
-  
+
   // ----------------------------------------------------
-  // وظيفة عرض المباني (مستوية)
+  // عرض المباني بشكل مستوٍ على الخريطة (بدون إيزومترك)
   function renderBuildings() {
     return gameState.buildings.map((b) => {
       const buildingData = BUILDINGS[b.type];
-
-      if (!buildingData) {
-        console.error(`Building data missing for type: ${b.type}`);
-        return null;
-      }
+      if (!buildingData) return null;
 
       return (
         <MovableBuilding
@@ -71,68 +55,14 @@ export default function Map({
           tileSize={TILE_SIZE}
           mapWidth={ACTIVE_SIZE}
           mapHeight={ACTIVE_SIZE}
-          isSelected={selectedBuilding && selectedBuilding.id === b.id}
+          isSelected={selectedBuilding?.id === b.id}
         />
       );
     });
   }
 
-  // وظيفة عرض المبنى المتحرك
-  function renderMovingBuilding() {
-    if (!buildingToMove) return null;
-    const buildingData = BUILDINGS[buildingToMove.type];
-
-    if (!buildingData) return null;
-
-    return (
-      <MovableBuilding
-        building={buildingToMove}
-        buildingData={buildingData}
-        tileSize={TILE_SIZE}
-        mapWidth={ACTIVE_SIZE}
-        mapHeight={ACTIVE_SIZE}
-        isMoving={true}
-      />
-    );
-  }
-
-  // 🛑 وظيفة عرض الشبكة النشطة (مائلة 45 درجة)
-  function renderActiveGrid() {
-    // 🛑 يتم إرجاع View مائل 45 درجة بدلاً من null
-    return (
-      <View 
-        style={{
-          ...StyleSheet.absoluteFillObject,
-          transform: [{ rotate: "45deg" }], // 🛑 تطبيق الميلان 45 درجة هنا
-          backgroundColor: "rgba(0,0,0,0.1)", 
-          overflow: "hidden",
-          borderWidth: 1,
-          borderColor: 'rgba(255, 255, 255, 0.5)',
-        }}
-      >
-        {/* هنا ستظهر خطوط الشبكة المائلة */}
-      </View>
-    );
-  }
-  
   // ----------------------------------------------------
-  
-  const handleConfirmPlacement = (gridX, gridY) => {
-      if (onConfirmPlacement) {
-          onConfirmPlacement(buildingToPlaceType, gridX, gridY);
-      }
-      setBuildingToPlaceType(null); 
-  };
 
-  const handleCancelPlacement = () => {
-      if (onCancelPlacement) {
-          onCancelPlacement();
-      }
-      setBuildingToPlaceType(null); 
-  };
-
-  // ----------------------------------------------------
-  
   return (
     <View style={styles.fullScreen}>
       <Camera
@@ -141,14 +71,14 @@ export default function Map({
         onCameraOffsetChange={handleCameraOffsetChange}
       >
         <View style={styles.mapContainer}>
-          
-          {/* 🖼️ 1. صورة الأرضية (في الأسفل) */}
+
+          {/* الأرضية */}
           <Image
             source={require("../assets/images/Game_floor.jpg")}
             style={styles.backgroundImage}
           />
 
-          {/* 🏗️ 2. طبقة المباني (مستوية - تحتوي على الشبكة المائلة) */}
+          {/* طبقة المباني */}
           <View
             style={[
               styles.buildingLayer,
@@ -160,42 +90,47 @@ export default function Map({
               },
             ]}
           >
-            {/* 🛑 يتم عرض الشبكة المائلة هنا */}
-            {renderActiveGrid()} 
-            
-            {/* المباني تظهر مستوية فوق الشبكة المائلة */}
             {renderBuildings()}
-            {renderMovingBuilding()}
-          </View>
 
+            {buildingToMove && (
+              <MovableBuilding
+                building={buildingToMove}
+                buildingData={BUILDINGS[buildingToMove.type]}
+                tileSize={TILE_SIZE}
+                mapWidth={ACTIVE_SIZE}
+                mapHeight={ACTIVE_SIZE}
+                isMoving={true}
+              />
+            )}
+          </View>
         </View>
       </Camera>
 
-      {/* 🛑 استدعاء شاشة وضع المبنى */}
+      {/* وضع المبنى */}
       {buildingToPlaceType && (
-          <BuildingPlacement
-              buildingType={buildingToPlaceType}
-              gameState={gameState}
-              onConfirmPlacement={handleConfirmPlacement}
-              onCancelPlacement={handleCancelPlacement}
-              tileSize={TILE_SIZE} 
-              cameraOffset={currentCameraOffset} 
-              // ⚠️ يجب التأكد من أن BuildingPlacement.js مستوٍ (Flat) ليتناسب مع الخريطة الآن
-          />
+        <BuildingPlacement
+          buildingType={buildingToPlaceType}
+          gameState={gameState}
+          onConfirmPlacement={onConfirmPlacement}
+          onCancelPlacement={onCancelPlacement}
+          tileSize={TILE_SIZE}
+          cameraOffset={currentCameraOffset}
+        />
       )}
-      
+
+      {/* لوحة معلومات المبنى */}
       {selectedBuilding && (
         <BuildingInfoPanel
           building={selectedBuilding}
           buildingData={BUILDINGS[selectedBuilding.type]}
           currentResources={gameState.resources}
           onClose={() => setSelectedBuilding(null)}
-          onStartMove={() => { /* handleStartMove(selectedBuilding) */ }}
           onStartUpgrade={() => onStartUpgrade(selectedBuilding)}
           currentTime={TimeUtils.now()}
         />
       )}
 
+      {/* زر المتجر */}
       <ShopButton
         onPress={() => onOpenShop(true)}
         style={styles.shopButtonPlacement}
@@ -211,6 +146,7 @@ const styles = StyleSheet.create({
     width: MAP_WIDTH,
     height: MAP_HEIGHT,
   },
+
   backgroundImage: {
     width: MAP_WIDTH,
     height: MAP_HEIGHT,
@@ -218,16 +154,8 @@ const styles = StyleSheet.create({
     resizeMode: "stretch",
   },
 
-  // 🛑 تم تنظيف هذا النمط ليصبح حاوية مستوية للمباني
   buildingLayer: {
     position: "absolute",
-    // ❌ لا يوجد ميلان هنا
-  },
-
-  gridTile: {
-    position: "absolute",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
   },
 
   shopButtonPlacement: {
@@ -236,4 +164,3 @@ const styles = StyleSheet.create({
     left: screenW / 2 - 50,
   },
 });
-
