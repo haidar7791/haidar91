@@ -2,7 +2,7 @@
 // كلاس لتمثيل هيكل بيانات المبنى في حالة اللعبة (gameState).
 
 // 🛑🛑🛑 الاستيراد من ملف الإدارة المركزي 🛑🛑🛑
-import { BUILDINGS } from "./exports";
+import BUILDINGS from "./BuildingData";
 
 export default class Building {
   constructor(id, type, level, x, y) {
