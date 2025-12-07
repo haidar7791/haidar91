@@ -28,7 +28,6 @@ import ResourceBar from './ResourceBar';
 import ShopBar from './ShopBar';
 import ShopButton from './ShopButton';
 import ShopItem from './ShopItem';
-import BuildingInfoPanel from './BuildingInfoPanel'; // موجود في المجلد الحالي src/
 import TroopTrainingPanel from './TroopTrainingPanel';
 import TimerDisplay from './TimerDisplay';
 import UpgradePopup from './UpgradePopup';
@@ -85,7 +84,6 @@ export {
     ShopBar,
     ShopButton,
     ShopItem,
-    BuildingInfoPanel,
     TroopTrainingPanel,
     TimerDisplay,
     UpgradePopup,

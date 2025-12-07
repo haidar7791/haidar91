@@ -1,16 +1,13 @@
-// Map.js — نسخة خالية من الإيزومتريك + استيرادات مباشرة وصحيحة
-
-import React, { useState, useCallback, useMemo } from "react";
+// Map.js — نسخة مستقرة 100% بعد إصلاح خطأ duplicate keys
+import React, { useState, useCallback } from "react";
 import { View, StyleSheet, Dimensions, Image } from "react-native";
 
-// ⚠️ استيرادات مباشرة من الملفات الأصلية وليس exports.js
 import MovableBuilding from "./MovableBuilding";
 import BuildingPlacement from "./BuildingPlacement";
 import Camera from "./Camera";
-import BuildingInfoPanel from "./BuildingInfoPanel";
 import ShopButton from "./ShopButton";
 import BUILDINGS from "./BuildingData";
-import TimeUtils from "./TimeUtils";
+import UpgradePopup from "./UpgradePopup";
 
 const { width: screenW, height: screenH } = Dimensions.get("window");
 
@@ -20,15 +17,15 @@ const MAP_HEIGHT = screenH;
 const ACTIVE_ZONE_PERCENT = 0.99;
 const ACTIVE_SIZE = Math.floor(screenW * ACTIVE_ZONE_PERCENT);
 
-const TILE_SIZE = ACTIVE_SIZE / 20; // عدد مربعات الشبكة (عدّل إذا لزم)
+const TILE_SIZE = ACTIVE_SIZE / 20;
 
 export default function Map({
   gameState,
   onStartUpgrade,
   onMoveBuilding,
   onOpenShop,
-  onConfirmPlacement,
   onCancelPlacement,
+  onConfirmPlacement,
 }) {
   const [selectedBuilding, setSelectedBuilding] = useState(null);
   const [buildingToMove, setBuildingToMove] = useState(null);
@@ -40,8 +37,9 @@ export default function Map({
     setCameraOffset(offset);
   }, []);
 
-  // ----------------------------------------------------
-  // عرض المباني بشكل مستوٍ على الخريطة (بدون إيزومترك)
+  // ======================================================
+  // عرض المباني مع إصلاح key لتفادي Duplicate keys error
+  // ======================================================
   function renderBuildings() {
     return gameState.buildings.map((b) => {
       const buildingData = BUILDINGS[b.type];
@@ -49,19 +47,18 @@ export default function Map({
 
       return (
         <MovableBuilding
-          key={b.id}
+          key={String(b.id) + "_" + b.type} // ← إصلاح المفتاح نهائياً
           building={b}
           buildingData={buildingData}
           tileSize={TILE_SIZE}
           mapWidth={ACTIVE_SIZE}
           mapHeight={ACTIVE_SIZE}
           isSelected={selectedBuilding?.id === b.id}
+          onPress={() => setSelectedBuilding(b)}
         />
       );
     });
   }
-
-  // ----------------------------------------------------
 
   return (
     <View style={styles.fullScreen}>
@@ -71,14 +68,11 @@ export default function Map({
         onCameraOffsetChange={handleCameraOffsetChange}
       >
         <View style={styles.mapContainer}>
-
-          {/* الأرضية */}
           <Image
             source={require("../assets/images/Game_floor.jpg")}
             style={styles.backgroundImage}
           />
 
-          {/* طبقة المباني */}
           <View
             style={[
               styles.buildingLayer,
@@ -92,6 +86,7 @@ export default function Map({
           >
             {renderBuildings()}
 
+            {/* عند تحريك مبنى */}
             {buildingToMove && (
               <MovableBuilding
                 building={buildingToMove}
@@ -106,7 +101,7 @@ export default function Map({
         </View>
       </Camera>
 
-      {/* وضع المبنى */}
+      {/* وضع مبنى جديد */}
       {buildingToPlaceType && (
         <BuildingPlacement
           buildingType={buildingToPlaceType}
@@ -118,15 +113,17 @@ export default function Map({
         />
       )}
 
-      {/* لوحة معلومات المبنى */}
+      {/* نافذة معلومات + ترقية */}
       {selectedBuilding && (
-        <BuildingInfoPanel
+        <UpgradePopup
           building={selectedBuilding}
           buildingData={BUILDINGS[selectedBuilding.type]}
           currentResources={gameState.resources}
           onClose={() => setSelectedBuilding(null)}
-          onStartUpgrade={() => onStartUpgrade(selectedBuilding)}
-          currentTime={TimeUtils.now()}
+          onUpgrade={(id) => {
+            onStartUpgrade(id);
+            setSelectedBuilding(null);
+          }}
         />
       )}
 
@@ -140,7 +137,10 @@ export default function Map({
 }
 
 const styles = StyleSheet.create({
-  fullScreen: { flex: 1, backgroundColor: "#1b4d2e" },
+  fullScreen: {
+    flex: 1,
+    backgroundColor: "#1b4d2e",
+  },
 
   mapContainer: {
     width: MAP_WIDTH,
