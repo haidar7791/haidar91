@@ -12,70 +12,30 @@ export default function UpgradePopup({
 }) {
   if (!building || !buildingData) return null;
 
-  // مستوى الحالي والمستوى التالي (قد لا يوجد التالي)
   const levelInfo = buildingData.levels[building.level] || {};
   const nextLevelInfo = buildingData.levels[building.level + 1] || null;
 
-  // normalize cost: accept either { type:'Cobalt', amount:50 } or { Cobalt: 50, ... }
-  const normalizedNextCost = useMemo(() => {
-    if (!nextLevelInfo || !nextLevelInfo.cost) return null;
-
-    const c = nextLevelInfo.cost;
-    // already in { type, amount } shape
-    if (c.type && (c.amount !== undefined)) {
-      return { type: c.type, amount: c.amount };
-    }
-    // maybe given as map { Cobalt: 50, Elixir: 10 }
-    if (typeof c === "object") {
-      const entries = Object.entries(c);
-      if (entries.length === 1) {
-        const [res, amt] = entries[0];
-        return { type: res, amount: amt };
-      } else {
-        // if multiple resource types, pick first for compatibility (UI will show all)
-        const [res, amt] = entries[0];
-        return { type: res, amount: amt };
-      }
-    }
-    return null;
-  }, [nextLevelInfo]);
-
-  // helper: produce array of cost lines for display (handles both shapes)
   const costLines = useMemo(() => {
     if (!nextLevelInfo || !nextLevelInfo.cost) return [];
     const c = nextLevelInfo.cost;
-    if (c.type && (c.amount !== undefined)) {
-      return [{ resource: c.type, amount: c.amount }];
-    }
-    if (typeof c === "object") {
-      return Object.entries(c).map(([res, amt]) => ({ resource: res, amount: amt }));
-    }
+    if (c.type && (c.amount !== undefined)) return [{ resource: c.type, amount: c.amount }];
+    if (typeof c === "object") return Object.entries(c).map(([resource, amount]) => ({ resource, amount }));
     return [];
   }, [nextLevelInfo]);
 
-  // affordability check (requires normalizedNextCost or costLines)
   const affordable = useMemo(() => {
-    if (!nextLevelInfo || !costLines.length) return false;
-    return costLines.every(({ resource, amount }) => {
-      const have = currentResources[resource] || 0;
-      return have >= amount;
-    });
-  }, [nextLevelInfo, currentResources, costLines]);
+    if (!costLines.length) return false;
+    return costLines.every(({ resource, amount }) => (currentResources[resource] || 0) >= amount);
+  }, [costLines, currentResources]);
 
-  // determine if upgrading is allowed from UI POV
   const isUpgrading = !!building.isUpgrading;
-  const upgradeDisabled = !nextLevelInfo || isUpgrading || !affordable;
+  const isBuilding = !!building.isBuilding;
 
-  // compute remaining upgrade/build time (if any)
   const remainingMs = useMemo(() => {
-    if (isUpgrading && building.upgradeFinishTime) {
-      return Math.max(0, (building.upgradeFinishTime || 0) - currentTime);
-    }
-    if (building.isBuilding && building.buildFinishTime) {
-      return Math.max(0, (building.buildFinishTime || 0) - currentTime);
-    }
+    if (isUpgrading && building.upgradeFinishTime) return Math.max(0, (building.upgradeFinishTime || 0) - currentTime);
+    if (isBuilding && building.buildFinishTime) return Math.max(0, (building.buildFinishTime || 0) - currentTime);
     return 0;
-  }, [building, currentTime, isUpgrading]);
+  }, [building, currentTime, isUpgrading, isBuilding]);
 
   const formatMs = (ms) => {
     if (ms <= 0) return "0s";
@@ -88,13 +48,19 @@ export default function UpgradePopup({
     return `${secs}s`;
   };
 
-  const handleUpgradePress = () => {
-    if (!nextLevelInfo || !normalizedNextCost) return;
-    // buildTime in BuildingData is seconds — convert to ms
+  const handleUpgrade = () => {
+    if (!nextLevelInfo) return;
     const seconds = nextLevelInfo.buildTime || nextLevelInfo.constructionTime || 0;
     const durationMs = seconds * 1000;
-    // call parent onUpgrade with (buildingId, durationMs, costObj)
-    onUpgrade && onUpgrade(building.id, durationMs, { type: normalizedNextCost.type, amount: normalizedNextCost.amount });
+    // pick cost shape
+    if (!nextLevelInfo.cost) return;
+    // if cost map choose first as fallback (app logic may expect more complex)
+    if (nextLevelInfo.cost.type && (nextLevelInfo.cost.amount !== undefined)) {
+      onUpgrade && onUpgrade(building.id, durationMs, { type: nextLevelInfo.cost.type, amount: nextLevelInfo.cost.amount });
+    } else if (typeof nextLevelInfo.cost === "object") {
+      // if multiple resource types pass full map
+      onUpgrade && onUpgrade(building.id, durationMs, nextLevelInfo.cost);
+    }
   };
 
   return (
@@ -103,27 +69,25 @@ export default function UpgradePopup({
         <Text style={styles.title}>{buildingData.name}</Text>
         <Text style={styles.level}>Level: {building.level}</Text>
 
-        {/* إنتاج / سعة */}
         {levelInfo.production && Object.keys(levelInfo.production).length > 0 && (
           <Text style={styles.info}>
             Production: {Object.entries(levelInfo.production).map(([r, v]) => `${r}: ${v}`).join(", ")}
           </Text>
         )}
+
         {levelInfo.storage && Object.keys(levelInfo.storage).length > 0 && (
           <Text style={styles.info}>
             Storage: {Object.entries(levelInfo.storage).map(([r, v]) => `${r}: ${v}`).join(", ")}
           </Text>
         )}
 
-        {/* حالة البناء/الترقية الجارية */}
         {remainingMs > 0 && (
           <Text style={styles.info}>
-            {isUpgrading ? "Upgrading — remaining: " : (building.isBuilding ? "Building — remaining: " : "")}
+            {isUpgrading ? "Upgrading — remaining: " : (isBuilding ? "Building — remaining: " : "")}
             {formatMs(remainingMs)}
           </Text>
         )}
 
-        {/* التكلفة للمستوى التالي */}
         {nextLevelInfo ? (
           <>
             <Text style={styles.sectionTitle}>Next Level</Text>
@@ -135,9 +99,9 @@ export default function UpgradePopup({
             ))}
 
             <TouchableOpacity
-              style={[styles.upgradeBtn, upgradeDisabled ? styles.disabledBtn : null]}
-              onPress={handleUpgradePress}
-              disabled={upgradeDisabled}
+              style={[styles.upgradeBtn, (!affordable || isUpgrading || isBuilding) ? styles.disabledBtn : null]}
+              onPress={handleUpgrade}
+              disabled={!affordable || isUpgrading || isBuilding}
             >
               <Text style={styles.btnText}>
                 {isUpgrading ? "Upgrading..." : (affordable ? "Upgrade" : "Not enough resources")}
@@ -181,20 +145,8 @@ const styles = StyleSheet.create({
   },
   cost: { color: "#ffcc00", marginBottom: 4 },
   maxed: { color: "#00ff99", textAlign: "center", marginVertical: 10 },
-  upgradeBtn: {
-    backgroundColor: "#28a745",
-    padding: 10,
-    borderRadius: 6,
-    marginTop: 10,
-  },
-  disabledBtn: {
-    backgroundColor: "#555",
-  },
-  closeBtn: {
-    backgroundColor: "#d9534f",
-    padding: 10,
-    borderRadius: 6,
-    marginTop: 10,
-  },
+  upgradeBtn: { backgroundColor: "#28a745", padding: 10, borderRadius: 6, marginTop: 10 },
+  disabledBtn: { backgroundColor: "#555" },
+  closeBtn: { backgroundColor: "#d9534f", padding: 10, borderRadius: 6, marginTop: 10 },
   btnText: { color: "#fff", textAlign: "center", fontWeight: "bold" },
 });

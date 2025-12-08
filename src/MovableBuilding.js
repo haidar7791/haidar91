@@ -1,12 +1,9 @@
-// src/MovableBuilding.js (النسخة الأكثر استقرارًا)
-
+// src/MovableBuilding.js
 import React, { useRef, useEffect } from 'react';
-import { Image, Dimensions, Animated } from 'react-native'; 
+import { Image, Animated } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
-const clamp = (v, a, b) => {
-    return Math.max(a, Math.min(b, v));
-};
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 export default function MovableBuilding({
     building,
@@ -16,12 +13,11 @@ export default function MovableBuilding({
     mapHeight = 800,
     onMoveStart,
     onMoveEnd,
+    onPress,          // short tap => info
     isSelected = false,
     isMoving = false,
 }) {
-    if (!buildingData) {
-        return null;
-    }
+    if (!buildingData) return null;
 
     const initialX = building.x * tileSize;
     const initialY = building.y * tileSize;
@@ -29,10 +25,11 @@ export default function MovableBuilding({
     const currentX = useRef(new Animated.Value(initialX)).current;
     const currentY = useRef(new Animated.Value(initialY)).current;
     const opacity = useRef(new Animated.Value(isMoving ? 0.6 : 1)).current;
-    
-    const startOffset = useRef({ x: initialX, y: initialY }); 
 
-    const buildingSize = buildingData.size * tileSize;
+    const startOffset = useRef({ x: initialX, y: initialY });
+    const draggingRef = useRef(false);
+
+    const buildingSize = (buildingData.size || 1) * tileSize;
 
     const MAX_X = mapWidth - buildingSize;
     const MAX_Y = mapHeight - buildingSize;
@@ -42,144 +39,121 @@ export default function MovableBuilding({
     const initialTileX = building.x;
     const initialTileY = building.y;
 
-    // -----------------------------------------------------------
-    // ✋ Pan Gesture (تم تثبيت الحركة)
-    // -----------------------------------------------------------
+    // LongPress: if triggered, set draggingRef and call onMoveStart
+    const longPress = Gesture.LongPress()
+      .minDuration(250)
+      .onStart(() => {
+        draggingRef.current = true;
+        if (onMoveStart) onMoveStart(building.id);
+        Animated.timing(opacity, { toValue: 0.7, duration: 120, useNativeDriver: false }).start();
+        startOffset.current = { x: currentX.__getValue(), y: currentY.__getValue() };
+      })
+      .onEnd(() => {
+        // not used here
+      })
+      .runOnJS(true);
+
+    // Pan: only moves while draggingRef is true (i.e., after long press)
     const pan = Gesture.Pan()
-        .minPointers(1)
-        .maxPointers(1)
-        .onStart((e) => {
-            startOffset.current = {
-                x: currentX.__getValue(),
-                y: currentY.__getValue(),
-            };
+      .minPointers(1)
+      .maxPointers(1)
+      .onStart(() => {
+        // capture starting offset
+        startOffset.current = { x: currentX.__getValue(), y: currentY.__getValue() };
+      })
+      .onUpdate((e) => {
+        if (!draggingRef.current) return;
+        const newX = startOffset.current.x + e.translationX;
+        const newY = startOffset.current.y + e.translationY;
+        const clampedX = clamp(newX, MIN_X, MAX_X);
+        const clampedY = clamp(newY, MIN_Y, MAX_Y);
+        currentX.setValue(clampedX);
+        currentY.setValue(clampedY);
+      })
+      .onEnd(() => {
+        if (!draggingRef.current) return;
+        Animated.timing(opacity, { toValue: 1, duration: 150, useNativeDriver: false }).start();
 
-            if (onMoveStart) onMoveStart(building.id);
+        const finalXValue = currentX.__getValue();
+        const finalYValue = currentY.__getValue();
 
-            Animated.timing(opacity, {
-                toValue: 0.6,
-                duration: 150,
-                useNativeDriver: false,
-            }).start();
-        })
-        .onUpdate((e) => {
-            const newX = startOffset.current.x + e.translationX;
-            const newY = startOffset.current.y + e.translationY;
+        const snappedX = clamp(Math.round(finalXValue / tileSize) * tileSize, MIN_X, MAX_X);
+        const snappedY = clamp(Math.round(finalYValue / tileSize) * tileSize, MIN_Y, MAX_Y);
 
-            const clampedX = clamp(newX, MIN_X, MAX_X);
-            const clampedY = clamp(newY, MIN_Y, MAX_Y);
+        Animated.spring(currentX, { toValue: snappedX, useNativeDriver: false }).start();
+        Animated.spring(currentY, { toValue: snappedY, useNativeDriver: false }).start(() => {
+          // call onMoveEnd after short delay to allow animation
+          if (onMoveEnd) {
+            setTimeout(() => {
+              onMoveEnd({
+                id: building.id,
+                newX: snappedX / tileSize,
+                newY: snappedY / tileSize,
+                oldX: initialTileX,
+                oldY: initialTileY,
+              });
+            }, 40);
+          }
+          draggingRef.current = false;
+        });
+      })
+      .runOnJS(true);
 
-            currentX.setValue(clampedX);
-            currentY.setValue(clampedY);
-        })
-        .onEnd((e) => {
-            const finalXValue = currentX.__getValue();
-            const finalYValue = currentY.__getValue();
+    // Tap: short tap opens info (only when not dragging)
+    const tap = Gesture.Tap()
+      .maxDuration(180)
+      .maxDistance(10)
+      .onEnd(() => {
+        // if currently dragging, ignore tap
+        if (draggingRef.current) return;
+        if (onPress) onPress(building);
+      })
+      .runOnJS(true);
 
-            const snappedX = clamp(
-                Math.round(finalXValue / tileSize) * tileSize,
-                MIN_X,
-                MAX_X
-            );
-            const snappedY = clamp(
-                Math.round(finalYValue / tileSize) * tileSize,
-                MIN_Y,
-                MAX_Y
-            );
+    // Combine gestures: longPress+pan for dragging, tap for info. We use Simultaneous to allow longPress to start first.
+    const composed = Gesture.Exclusive(tap, Gesture.Simultaneous(longPress, pan));
 
-            // الحركة أولاً
-            Animated.timing(opacity, { toValue: 1, duration: 150, useNativeDriver: false }).start();
-            
-            Animated.spring(currentX, { 
-                toValue: snappedX, 
-                useNativeDriver: false,
-                tension: 40, 
-                friction: 7, 
-            }).start();
-            Animated.spring(currentY, { 
-                toValue: snappedY, 
-                useNativeDriver: false,
-                tension: 40,
-                friction: 7,
-            }).start(() => {
-                // 🛑 الحل: تأجيل استدعاء onMoveEnd باستخدام setTimeout
-                if (onMoveEnd) {
-                    setTimeout(() => {
-                         onMoveEnd({
-                            id: building.id,
-                            newX: snappedX / tileSize,
-                            newY: snappedY / tileSize,
-                            oldX: initialTileX,
-                            oldY: initialTileY
-                        });
-                    }, 50); 
-                }
-            });
-        })
-        // 🛑 التعديل الأخير للثبات
-        .runOnJS(true);
-        
-    // -----------------------------------------------------------
-    // 🎨 النمط المتحرك
-    // -----------------------------------------------------------
-    const animatedStyle = {
-        transform: [
-            { translateX: currentX },
-            { translateY: currentY },
-        ],
-        opacity: opacity,
-        zIndex: isMoving ? 1000 : building.y,
-    };
-    
-    // 🛑 useEffect لإعادة تعيين الموقع عندما يتغير موضع المبنى (بسبب الحفظ)
+    // sync external updates to animated values
     useEffect(() => {
-        const currentRefX = currentX.__getValue();
-        const currentRefY = currentY.__getValue();
-        const targetX = building.x * tileSize;
-        const targetY = building.y * tileSize;
-
-        if (currentRefX !== targetX || currentRefY !== targetY) {
-            Animated.spring(currentX, {
-                toValue: targetX,
-                useNativeDriver: false,
-                tension: 40,
-                friction: 7,
-            }).start();
-            Animated.spring(currentY, {
-                toValue: targetY,
-                useNativeDriver: false,
-                tension: 40,
-                friction: 7,
-            }).start();
-        }
-
+      const targetX = building.x * tileSize;
+      const targetY = building.y * tileSize;
+      if (Math.abs(currentX.__getValue() - targetX) > 1) {
+        Animated.spring(currentX, { toValue: targetX, useNativeDriver: false }).start();
+      }
+      if (Math.abs(currentY.__getValue() - targetY) > 1) {
+        Animated.spring(currentY, { toValue: targetY, useNativeDriver: false }).start();
+      }
     }, [building.x, building.y, tileSize]);
-    
+
+    const animatedStyle = {
+      transform: [{ translateX: currentX }, { translateY: currentY }],
+      opacity,
+      zIndex: isMoving ? 1000 : building.y,
+    };
+
     return (
-        <GestureDetector gesture={pan}>
-            <Animated.View
-                style={[
-                    {
-                        position: 'absolute',
-                        width: buildingSize,
-                        height: buildingSize,
-                    },
-                    animatedStyle,
-                ]}
-            >
-                <Image
-                    source={buildingData.image}
-                    style={{ 
-                        width: '100%', 
-                        height: '100%',
-                        resizeMode: 'contain',
-                        transform: [{ rotate: '-10deg' }], 
-                        borderColor: isSelected ? 'yellow' : 'transparent',
-                        borderWidth: isSelected ? 2 : 0,
-                    }}
-                />
-            </Animated.View>
-        </GestureDetector>
+      <GestureDetector gesture={composed}>
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              width: buildingSize,
+              height: buildingSize,
+            },
+            animatedStyle,
+          ]}
+        >
+          <Image
+            source={buildingData.image}
+            style={{
+              width: '100%',
+              height: '100%',
+              resizeMode: 'contain',
+              borderColor: isSelected ? 'yellow' : 'transparent',
+              borderWidth: isSelected ? 2 : 0,
+            }}
+          />
+        </Animated.View>
+      </GestureDetector>
     );
 }
-

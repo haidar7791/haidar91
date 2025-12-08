@@ -1,10 +1,8 @@
-// src/Map.js — نسخة كاملة مصححة 100%
-
-import React, { useState, useCallback } from "react";
+// src/Map.js
+import React, { useState, useCallback, useEffect } from "react";
 import { View, StyleSheet, Dimensions, Image } from "react-native";
 
 import MovableBuilding from "./MovableBuilding";
-import BuildingPlacement from "./BuildingPlacement";
 import Camera from "./Camera";
 import ShopButton from "./ShopButton";
 import BUILDINGS from "./BuildingData";
@@ -27,22 +25,26 @@ export default function Map({
   onOpenShop,
   onCancelPlacement,
   onConfirmPlacement,
+  onSelectBuilding, // optional but kept for compatibility
 }) {
   const [selectedBuilding, setSelectedBuilding] = useState(null);
-  const [buildingToMove, setBuildingToMove] = useState(null);
-  const [buildingToPlaceType, setBuildingToPlaceType] = useState(null);
-
   const [currentCameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
 
   const handleCameraOffsetChange = useCallback((offset) => {
-    setCameraOffset(offset);
+    setCurrentCameraOffset(offset);
   }, []);
 
-  // ======================================================
-  // عرض المباني مع إصلاح key لتفادي Duplicate keys error
-  // ======================================================
+  // when gameState.buildings changed, refresh selectedBuilding reference so popup continues to show & update
+  useEffect(() => {
+    if (selectedBuilding) {
+      const refreshed = (gameState.buildings || []).find(b => b.id === selectedBuilding.id);
+      if (refreshed) setSelectedBuilding(refreshed);
+      else setSelectedBuilding(null);
+    }
+  }, [gameState.buildings]);
+
   function renderBuildings() {
-    return gameState.buildings.map((b) => {
+    return (gameState.buildings || []).map((b) => {
       const buildingData = BUILDINGS[b.type];
       if (!buildingData) return null;
 
@@ -55,7 +57,17 @@ export default function Map({
           mapWidth={ACTIVE_SIZE}
           mapHeight={ACTIVE_SIZE}
           isSelected={selectedBuilding?.id === b.id}
-          onPress={() => setSelectedBuilding(b)}
+          onPress={(bb) => {
+            setSelectedBuilding(bb);
+            if (onSelectBuilding) onSelectBuilding(bb);
+          }}
+          onMoveStart={() => {
+            // optional: you may highlight or lock UI while moving
+          }}
+          onMoveEnd={(moveObj) => {
+            // forward to parent hook
+            if (onMoveBuilding) onMoveBuilding(moveObj);
+          }}
         />
       );
     });
@@ -86,35 +98,10 @@ export default function Map({
             ]}
           >
             {renderBuildings()}
-
-            {/* عند تحريك مبنى */}
-            {buildingToMove && (
-              <MovableBuilding
-                building={buildingToMove}
-                buildingData={BUILDINGS[buildingToMove.type]}
-                tileSize={TILE_SIZE}
-                mapWidth={ACTIVE_SIZE}
-                mapHeight={ACTIVE_SIZE}
-                isMoving={true}
-              />
-            )}
           </View>
         </View>
       </Camera>
 
-      {/* وضع مبنى جديد */}
-      {buildingToPlaceType && (
-        <BuildingPlacement
-          buildingType={buildingToPlaceType}
-          gameState={gameState}
-          onConfirmPlacement={onConfirmPlacement}
-          onCancelPlacement={onCancelPlacement}
-          tileSize={TILE_SIZE}
-          cameraOffset={currentCameraOffset}
-        />
-      )}
-
-      {/* نافذة معلومات + ترقية */}
       {selectedBuilding && (
         <UpgradePopup
           building={selectedBuilding}
@@ -123,13 +110,12 @@ export default function Map({
           currentTime={Date.now()}
           onClose={() => setSelectedBuilding(null)}
           onUpgrade={(buildingId, durationMs, costObj) => {
-            onStartUpgrade(buildingId, durationMs, costObj);
+            if (onStartUpgrade) onStartUpgrade(buildingId, durationMs, costObj);
             setSelectedBuilding(null);
           }}
         />
       )}
 
-      {/* زر المتجر */}
       <ShopButton
         onPress={() => onOpenShop(true)}
         style={styles.shopButtonPlacement}

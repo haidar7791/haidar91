@@ -1,187 +1,90 @@
 // src/BuildingPlacement.js
-// شاشة شفافة تظهر فوق الخريطة للسماح للمستخدم بوضع مبنى جديد
-// يتم عرض شبح المبنى، ويتم التحقق من التصادمات قبل التأكيد.
+import React, { useState, useRef, useMemo } from "react";
+import { View, StyleSheet, Dimensions, TouchableOpacity, PanResponder, Image, Text } from "react-native";
+import BUILDINGS, { SHOP_ITEMS } from "./BuildingData";
+import { MAP_TILES_X, MAP_TILES_Y } from "./MapConfig";
 
-import React, { useState, useRef } from "react";
-import { 
-  View, 
-  StyleSheet, 
-  Dimensions, 
-  TouchableOpacity, 
-  PanResponder, 
-  Image, 
-  Text,
-} from "react-native";
-import { BUILDINGS } from './BuildingData';
-import { MAP_TILES_X, MAP_TILES_Y } from './MapConfig';
-import * as placementUtils from './placementUtils';
+// دالة مساعدة: هل هناك مبنى يتداخل مع (x,y,size)؟
+const isOverlapping = (buildings, test) => {
+  for (const b of buildings || []) {
+    const bw = b.size || 1;
+    const bh = b.size || 1;
+    const tx = test.x, ty = test.y, tw = test.size, th = test.size;
+    const overlap = !(tx + tw <= b.x || tx >= b.x + bw || ty + th <= b.y || ty >= b.y + bh);
+    if (overlap) return true;
+  }
+  return false;
+};
 
-const TILE_SIZE = 80;
-const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+export default function BuildingPlacement({ buildingType, gameState, onConfirmPlacement, onCancelPlacement, tileSize = 32, cameraOffset = { x: 0, y: 0 } }) {
+  const [gridPos, setGridPos] = useState({ x: -1, y: -1 });
+  const containerRef = useRef(null);
 
-const BuildingPlacement = ({ buildingType, gameState, onConfirmPlacement, onCancelPlacement }) => {
   const buildingData = BUILDINGS[buildingType];
-  const buildingSize = buildingData.size;
-  
-  // الحالة لتتبع موقع المبنى في شاشة الهاتف (بالبكسل)
-  const [position, setPosition] = useState({ x: 60, y: 60 });
-  // الحالة لتتبع موقع المبنى في شبكة الخريطة (بالبلاطة)
-  const [gridPosition, setGridPosition] = useState({ x: -1, y: -1 });
-  // حالة للتصادم
-  const [isColliding, setIsColliding] = useState(true);
+  const size = buildingData?.size || 1;
 
-  // إزاحة الشاشة (يجب أن يتم تمريرها من Map.js لضمان الدقة، لكننا سنفترض هنا إزاحة صفرية كحل مؤقت)
-  const cameraOffset = useRef({ x: 0, y: 0 }).current; 
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-
-      onPanResponderMove: (evt, gestureState) => {
-        // تحديث الموقع بالبكسل
-        const newX = gestureState.moveX - (buildingSize.w * TILE_SIZE / 2);
-        const newY = gestureState.moveY - (buildingSize.h * TILE_SIZE / 2);
-        
-        setPosition({ x: newX, y: newY });
-        
-        // حساب موقع الشبكة (Grid Position)
-        // يجب عكس إزاحة الكاميرا للحصول على موقع البلاطة الصحيح
-        const gridX = Math.floor((newX - cameraOffset.x) / TILE_SIZE);
-        const gridY = Math.floor((newY - cameraOffset.y) / TILE_SIZE);
-        
-        // التحقق من أن الموقع داخل حدود الخريطة
-        const withinBounds = placementUtils.checkBounds({
-            x: gridX, y: gridY, width: buildingSize.w, height: buildingSize.h
-        }, MAP_TILES_X, MAP_TILES_Y);
-        
-        if (withinBounds) {
-            // التحقق من التصادم مع المباني الموجودة
-            const collision = placementUtils.checkCollision(
-                { x: gridX, y: gridY, width: buildingSize.w, height: buildingSize.h },
-                gameState.buildings,
-                MAP_TILES_X,
-                MAP_TILES_Y,
-                BUILDINGS
-            );
-            
-            setIsColliding(collision);
-            setGridPosition({ x: gridX, y: gridY });
-        } else {
-            setIsColliding(true);
-            setGridPosition({ x: -1, y: -1 });
-        }
-      },
-
-      onPanResponderRelease: () => {
-        // لا يوجد منطق هنا، يتم الاعتماد على زر التأكيد
-      },
-    })
-  ).current;
-  
-  const handleConfirm = () => {
-      // يجب أن يكون داخل الحدود ولا يوجد تصادم
-      if (gridPosition.x !== -1 && !isColliding) {
-          onConfirmPlacement(gridPosition.x, gridPosition.y);
+  // PanResponder to move the ghost by touch (simplified)
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onPanResponderMove: (evt, gesture) => {
+      const touchX = gesture.moveX - (cameraOffset.x || 0);
+      const touchY = gesture.moveY - (cameraOffset.y || 0);
+      // تحويل إلى شبكة (افتراضي خريطة in pixels = tileSize * MAP_TILES_X)
+      const mapLeft = 0;
+      const mapTop = 0;
+      const relX = touchX - mapLeft;
+      const relY = touchY - mapTop;
+      const gx = Math.floor(relX / tileSize);
+      const gy = Math.floor(relY / tileSize);
+      if (gx >= 0 && gy >= 0 && gx < MAP_TILES_X && gy < MAP_TILES_Y) {
+        setGridPos({ x: gx, y: gy });
       } else {
-          // رسالة خطأ بسيطة في الواجهة
-          alert("لا يمكن البناء هنا! الموقع متصادم أو خارج الحدود.");
+        setGridPos({ x: -1, y: -1 });
       }
-  };
+    },
+    onPanResponderRelease: () => {},
+  });
 
-  // نحتاج إلى عرض المبنى في الموضع الحالي
-  const ghostStyle = {
-    left: position.x,
-    top: position.y,
-    width: buildingSize.w * TILE_SIZE,
-    height: buildingSize.h * TILE_SIZE,
-    opacity: 0.7,
-    position: 'absolute',
-    // إذا كان هناك تصادم أو خارج الحدود، استخدم اللون الأحمر
-    backgroundColor: isColliding || gridPosition.x === -1 ? 'rgba(255, 0, 0, 0.5)' : 'rgba(0, 255, 0, 0.5)',
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: isColliding || gridPosition.x === -1 ? '#FF3333' : '#33FF33',
-    zIndex: 999,
-    justifyContent: 'center',
-    alignItems: 'center',
+  const isColliding = useMemo(() => {
+    if (gridPos.x === -1) return true;
+    return isOverlapping(gameState.buildings, { x: gridPos.x, y: gridPos.y, size });
+  }, [gridPos, gameState.buildings, size]);
+
+  const confirm = () => {
+    if (gridPos.x === -1) return;
+    if (isColliding) {
+      // منع التأكيد
+      return;
+    }
+    onConfirmPlacement && onConfirmPlacement(buildingType, gridPos.x, gridPos.y);
   };
 
   return (
-    <View style={styles.overlay} {...panResponder.panHandlers}>
-      {/* 1. شبح المبنى المتحرك */}
-      {gridPosition.x !== -1 && (
-        <View style={ghostStyle}>
-          <Image
-            source={buildingData.levels[1].image} // صورة المستوى الأول
-            style={{ width: '100%', height: '100%', opacity: 0.5 }}
-            resizeMode="contain"
-          />
+    <View style={styles.overlay} {...panResponder.panHandlers} ref={containerRef}>
+      {gridPos.x !== -1 && (
+        <View style={[styles.ghost, { left: gridPos.x * tileSize, top: gridPos.y * tileSize, width: size * tileSize, height: size * tileSize, backgroundColor: isColliding ? 'rgba(255,0,0,0.4)' : 'rgba(0,255,0,0.4)' }]}>
+          <Image source={buildingData.image} style={{ width: '100%', height: '100%', resizeMode: 'contain' }} />
         </View>
       )}
 
-      {/* 2. أزرار التحكم */}
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity
-          style={[styles.button, styles.cancelButton]}
-          onPress={onCancelPlacement}
-        >
-          <Text style={styles.buttonText}>إلغاء</Text>
+      <View style={styles.controls}>
+        <TouchableOpacity style={[styles.button, isColliding && styles.disabledButton]} onPress={confirm} disabled={isColliding}>
+          <Text style={styles.buttonText}>{isColliding ? "Cannot Place" : "Place"}</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.button, styles.confirmButton, (isColliding || gridPosition.x === -1) && styles.disabledButton]}
-          onPress={handleConfirm}
-          disabled={isColliding || gridPosition.x === -1}
-        >
-          <Text style={styles.buttonText}>تأكيد البناء</Text>
+        <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => onCancelPlacement && onCancelPlacement()}>
+          <Text style={styles.buttonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)', // خلفية شفافة قليلاً
-    zIndex: 500, // يظهر فوق الخريطة وتحت شريط الموارد
-  },
-  controlsContainer: {
-    position: 'absolute',
-    bottom: 50,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 20,
-  },
-  button: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
-  },
-  confirmButton: {
-    backgroundColor: '#4CAF50', // أخضر
-  },
-  cancelButton: {
-    backgroundColor: '#F44336', // أحمر
-  },
-  disabledButton: {
-    backgroundColor: '#9E9E9E', // رمادي
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 18,
-    textAlign: 'center',
-  },
+  overlay: { position: "absolute", left: 0, top: 0, right: 0, bottom: 0 },
+  ghost: { position: "absolute", borderWidth: 1, borderColor: "#fff", justifyContent: "center", alignItems: "center" },
+  controls: { position: "absolute", bottom: 20, left: 20, right: 20, flexDirection: "row", justifyContent: "space-between" },
+  button: { backgroundColor: "#28a745", padding: 12, borderRadius: 8, minWidth: 120, alignItems: "center" },
+  cancelButton: { backgroundColor: "#d9534f" },
+  disabledButton: { backgroundColor: "#9e9e9e", opacity: 0.7 },
+  buttonText: { color: "#fff", fontWeight: "bold" },
 });
-
-export default BuildingPlacement;
-
