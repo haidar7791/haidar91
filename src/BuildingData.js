@@ -30,7 +30,7 @@ export const BUILDINGS = {
     name: "Town Hall",
     name_ar: "مبنى القاعدة",
     maxCount: 1,
-    size: 3,
+    size: 4,
     canBePlaced: false,
     // فتح مباني جديدة كل ترقية وتوفير سعة تخزين أساسية (قاعدة)
     image: require("../assets/images/Town_Hall.png"),
@@ -42,7 +42,7 @@ export const BUILDINGS = {
         image: require("../assets/images/Town_Hall.png"),
         production: {},
         storage: { Cobalt: 500, Elixir: 500, Crystal: 50 },
-        unlocks: ["Cobalt_Mine", "Elixir_Collector", "Cobalt_Warehouse", "Elixir_Storehouse", "Building_Hut", "Cannon"], // تم إضافة المدفع
+        unlocks: ["Cobalt_Mine", "Elixir_Collector", "Building_Hut",], //
         maxBuildersUnlocked: 1,
       },
       2: {
@@ -96,7 +96,7 @@ export const BUILDINGS = {
   Cobalt_Mine: {
     name: "Cobalt Mine",
     name_ar: "منجم الكوبالت",
-    maxCount: 4,
+    maxCount: 1,
     size: 3,
     canBePlaced: true,
     image: require("../assets/images/Cobalt_Mine.png"),
@@ -117,7 +117,7 @@ export const BUILDINGS = {
   Elixir_Collector: {
     name: "Elixir Collector",
     name_ar: "مجمع الإكسير",
-    maxCount: 4,
+    maxCount: 1,
     size: 3,
     canBePlaced: true,
     image: require("../assets/images/Elixir_Collector.png"),
@@ -141,7 +141,7 @@ export const BUILDINGS = {
   Cobalt_Warehouse: {
     name: "Cobalt Warehouse",
     name_ar: "مخزن الكوبالت",
-    maxCount: 2,
+    maxCount: 1,
     size: 3,
     canBePlaced: true,
     image: require("../assets/images/Cobalt_warehouse.png"),
@@ -162,7 +162,7 @@ export const BUILDINGS = {
   Elixir_Storehouse: {
     name: "Elixir Storehouse",
     name_ar: "مخزن الإكسير",
-    maxCount: 2,
+    maxCount: 1,
     size: 3,
     canBePlaced: true,
     image: require("../assets/images/Elixir_storehouse.png"),
@@ -186,7 +186,7 @@ export const BUILDINGS = {
   Cannon: {
     name: "Cannon",
     name_ar: "مدفع",
-    maxCount: 4,
+    maxCount: 3,
     size: 3,
     canBePlaced: true,
     image: require("../assets/images/cannon.png"),
@@ -207,7 +207,7 @@ export const BUILDINGS = {
   Laser_Tower: {
     name: "Laser Tower",
     name_ar: "برج الليزر",
-    maxCount: 3,
+    maxCount: 1,
     size: 3,
     canBePlaced: true,
     image: require("../assets/images/Laser_Tower.png"),
@@ -231,8 +231,8 @@ export const BUILDINGS = {
   Builder_Hut: {
     name: "Builder_Hut",
     name_ar: "كوخ البناء",
-    maxCount: 4,
-    size: 2.5,
+    maxCount: 1,
+    size: 3,
     canBePlaced: true,
     image: require("../assets/images/Builder_Hut.png"),
     levels: {
@@ -254,7 +254,7 @@ export const BUILDINGS = {
     name: "Forces Camp",
     name_ar: "معسكر القوات",
     maxCount: 1,
-    size: 3,
+    size: 6,
     canBePlaced: true,
     image: require("../assets/images/Forces_camp.png"),
     levels: {

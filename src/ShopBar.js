@@ -75,12 +75,19 @@ export default function ShopBar({ shopVisible, resources, startPlacing }) {
 
   // 🛑🛑🛑 التصحيح: تصفية المباني غير الصالحة للعرض 🛑🛑🛑
   const availableBuildings = Object.entries(BUILDINGS)
-    .filter(([key, data]) => 
-      // 1. استثناء القلعة
-      key !== "Town_Hall" &&
-      // 2. التحقق من أن المبنى يملك بيانات المستوى الأول والتكلفة
-      data && data.levels && data.levels[1] && data.levels[1].cost
-    );
+  .filter(([key, data]) => {
+
+    // 1. استثناء القلعة + كوخ البناء
+    if (key === "Town_Hall" || key === "Builder_Hut") return false;
+
+    // 2. شرط مستوى القلعة (إن وجد)
+    if (data.requiredTownHall && data.requiredTownHall > resources.townHallLevel) {
+      return false;
+    }
+
+    // 3. التحقق من بيانات المستوى الأول
+    return data && data.levels && data.levels[1] && data.levels[1].cost;
+  });
 
   return (
     <Animated.View
