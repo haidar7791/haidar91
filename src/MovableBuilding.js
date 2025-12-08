@@ -1,7 +1,9 @@
 // src/MovableBuilding.js
-import React, { useRef, useEffect } from 'react';
-import { Image, Animated } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Image, Animated, Text, StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import TimerDisplay from './TimerDisplay';
+import { BUILDINGS } from './BuildingData';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -19,8 +21,8 @@ export default function MovableBuilding({
 }) {
     if (!buildingData) return null;
 
-    const initialX = building.x * tileSize;
-    const initialY = building.y * tileSize;
+    const initialX = (typeof building.x === 'number' ? building.x : 0) * tileSize;
+    const initialY = (typeof building.y === 'number' ? building.y : 0) * tileSize;
 
     const currentX = useRef(new Animated.Value(initialX)).current;
     const currentY = useRef(new Animated.Value(initialY)).current;
@@ -29,7 +31,7 @@ export default function MovableBuilding({
     const startOffset = useRef({ x: initialX, y: initialY });
     const draggingRef = useRef(false);
 
-    const buildingSize = (buildingData.size || 1) * tileSize;
+    const buildingSize = ((buildingData.size || building.size) || 1) * tileSize;
 
     const MAX_X = mapWidth - buildingSize;
     const MAX_Y = mapHeight - buildingSize;
@@ -39,7 +41,53 @@ export default function MovableBuilding({
     const initialTileX = building.x;
     const initialTileY = building.y;
 
+    // determine which image to display:
+    // - if building is upgrading, show next level's image (if available) so player sees the new appearance
+    // - otherwise show current level image (falls back to buildingData.image)
+    const levelToShow = (() => {
+      if (building.isUpgrading) {
+        const next = (building.level || 1) + 1;
+        const nextInfo = BUILDINGS[building.type]?.levels?.[next];
+        if (nextInfo && nextInfo.image) return next;
+      }
+      return building.level || 1;
+    })();
+
+    const imageSource = (BUILDINGS[building.type]?.levels?.[levelToShow]?.image) || buildingData.image;
+
+    // -----------------------------------------------------------
+    // timer state: remaining seconds for build/upgrade (computed from finishTime)
+    // keeps updating every second to show live timer above building
+    // -----------------------------------------------------------
+    const [remainingSec, setRemainingSec] = useState(() => {
+      const finish = building.isBuilding ? building.buildFinishTime : (building.isUpgrading ? building.upgradeFinishTime : null);
+      if (!finish) return 0;
+      return Math.max(0, Math.ceil((finish - Date.now()) / 1000));
+    });
+
+    useEffect(() => {
+      // recompute immediately when building changes (start/stop)
+      const finish = building.isBuilding ? building.buildFinishTime : (building.isUpgrading ? building.upgradeFinishTime : null);
+      setRemainingSec(finish ? Math.max(0, Math.ceil((finish - Date.now()) / 1000)) : 0);
+
+      let t = null;
+      if (finish) {
+        t = setInterval(() => {
+          const rem = Math.max(0, Math.ceil((finish - Date.now()) / 1000));
+          setRemainingSec(rem);
+          if (rem <= 0) {
+            clearInterval(t);
+          }
+        }, 1000);
+      }
+      return () => {
+        if (t) clearInterval(t);
+      };
+    }, [building.isBuilding, building.isUpgrading, building.buildFinishTime, building.upgradeFinishTime]);
+
+    // -----------------------------------------------------------
     // LongPress: if triggered, set draggingRef and call onMoveStart
+    // -----------------------------------------------------------
     const longPress = Gesture.LongPress()
       .minDuration(250)
       .onStart(() => {
@@ -48,9 +96,6 @@ export default function MovableBuilding({
         Animated.timing(opacity, { toValue: 0.7, duration: 120, useNativeDriver: false }).start();
         startOffset.current = { x: currentX.__getValue(), y: currentY.__getValue() };
       })
-      .onEnd(() => {
-        // not used here
-      })
       .runOnJS(true);
 
     // Pan: only moves while draggingRef is true (i.e., after long press)
@@ -58,7 +103,6 @@ export default function MovableBuilding({
       .minPointers(1)
       .maxPointers(1)
       .onStart(() => {
-        // capture starting offset
         startOffset.current = { x: currentX.__getValue(), y: currentY.__getValue() };
       })
       .onUpdate((e) => {
@@ -82,7 +126,6 @@ export default function MovableBuilding({
 
         Animated.spring(currentX, { toValue: snappedX, useNativeDriver: false }).start();
         Animated.spring(currentY, { toValue: snappedY, useNativeDriver: false }).start(() => {
-          // call onMoveEnd after short delay to allow animation
           if (onMoveEnd) {
             setTimeout(() => {
               onMoveEnd({
@@ -104,19 +147,18 @@ export default function MovableBuilding({
       .maxDuration(180)
       .maxDistance(10)
       .onEnd(() => {
-        // if currently dragging, ignore tap
         if (draggingRef.current) return;
         if (onPress) onPress(building);
       })
       .runOnJS(true);
 
-    // Combine gestures: longPress+pan for dragging, tap for info. We use Simultaneous to allow longPress to start first.
+    // Combine gestures: longPress+pan for dragging, tap for info.
     const composed = Gesture.Exclusive(tap, Gesture.Simultaneous(longPress, pan));
 
     // sync external updates to animated values
     useEffect(() => {
-      const targetX = building.x * tileSize;
-      const targetY = building.y * tileSize;
+      const targetX = (typeof building.x === 'number' ? building.x : 0) * tileSize;
+      const targetY = (typeof building.y === 'number' ? building.y : 0) * tileSize;
       if (Math.abs(currentX.__getValue() - targetX) > 1) {
         Animated.spring(currentX, { toValue: targetX, useNativeDriver: false }).start();
       }
@@ -128,7 +170,7 @@ export default function MovableBuilding({
     const animatedStyle = {
       transform: [{ translateX: currentX }, { translateY: currentY }],
       opacity,
-      zIndex: isMoving ? 1000 : building.y,
+      zIndex: isMoving ? 1000 : building.y || 0,
     };
 
     return (
@@ -143,8 +185,16 @@ export default function MovableBuilding({
             animatedStyle,
           ]}
         >
+          {/* Timer overlay: appears centered above the building when building/upgrading */}
+          {(building.isBuilding || building.isUpgrading) && (
+            <View style={[styles.timerWrap, { width: buildingSize, transform: [{ translateY: -10 }] }]}>
+              {/* use TimerDisplay for formatted styling, but pass the live remainingSec so it shows accurate time */}
+              <TimerDisplay duration={Math.max(0, remainingSec)} autoStart={true} style={styles.timerText} />
+            </View>
+          )}
+
           <Image
-            source={buildingData.image}
+            source={imageSource}
             style={{
               width: '100%',
               height: '100%',
@@ -157,3 +207,23 @@ export default function MovableBuilding({
       </GestureDetector>
     );
 }
+
+const styles = StyleSheet.create({
+  timerWrap: {
+    position: 'absolute',
+    top: -26,
+    left: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // small background pill for readability
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  timerText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fff',
+  },
+});
