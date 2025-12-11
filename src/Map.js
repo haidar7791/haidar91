@@ -25,16 +25,16 @@ export default function Map({
   onOpenShop,
   onCancelPlacement,
   onConfirmPlacement,
-  onSelectBuilding, // optional but kept for compatibility
+  onSelectBuilding,
 }) {
   const [selectedBuilding, setSelectedBuilding] = useState(null);
   const [currentCameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
 
   const handleCameraOffsetChange = useCallback((offset) => {
-    setCurrentCameraOffset(offset);
+    setCameraOffset(offset);
   }, []);
 
-  // when gameState.buildings changed, refresh selectedBuilding reference so popup continues to show & update
+  // عندما تتغير المباني، تحديث المبنى المحدد
   useEffect(() => {
     if (selectedBuilding) {
       const refreshed = (gameState.buildings || []).find(b => b.id === selectedBuilding.id);
@@ -43,34 +43,48 @@ export default function Map({
     }
   }, [gameState.buildings]);
 
+  // ✅ تحسين: دالة مبسطة لعرض المباني في طبقة واحدة
   function renderBuildings() {
-    return (gameState.buildings || []).map((b) => {
-      const buildingData = BUILDINGS[b.type];
-      if (!buildingData) return null;
+    const buildings = gameState.buildings || [];
+    
+    // ✅ ترتيب المباني حسب موقعها (لا طبقات)
+    return buildings
+      .sort((a, b) => {
+        // ترتيب حسب الصف ثم العمود
+        const rowA = Math.floor(a.y / TILE_SIZE);
+        const rowB = Math.floor(b.y / TILE_SIZE);
+        if (rowA !== rowB) return rowA - rowB;
+        return Math.floor(a.x / TILE_SIZE) - Math.floor(b.x / TILE_SIZE);
+      })
+      .map((b) => {
+        const buildingData = BUILDINGS[b.type];
+        if (!buildingData) return null;
 
-      return (
-        <MovableBuilding
-          key={String(b.id) + "_" + b.type}
-          building={b}
-          buildingData={buildingData}
-          tileSize={TILE_SIZE}
-          mapWidth={ACTIVE_SIZE}
-          mapHeight={ACTIVE_SIZE}
-          isSelected={selectedBuilding?.id === b.id}
-          onPress={(bb) => {
-            setSelectedBuilding(bb);
-            if (onSelectBuilding) onSelectBuilding(bb);
-          }}
-          onMoveStart={() => {
-            // optional: you may highlight or lock UI while moving
-          }}
-          onMoveEnd={(moveObj) => {
-            // forward to parent hook
-            if (onMoveBuilding) onMoveBuilding(moveObj);
-          }}
-        />
-      );
-    });
+        return (
+          <MovableBuilding
+            key={`building_${b.id}_${b.type}_${b.x}_${b.y}`}
+            building={b}
+            buildingData={buildingData}
+            tileSize={TILE_SIZE}
+            mapWidth={ACTIVE_SIZE}
+            mapHeight={ACTIVE_SIZE}
+            isSelected={selectedBuilding?.id === b.id}
+            onPress={(bb) => {
+              setSelectedBuilding(bb);
+              if (onSelectBuilding) onSelectBuilding(bb);
+            }}
+            onMoveStart={() => {
+              // مؤقت: يمكنك إضافة مؤشر التحرير
+            }}
+            onMoveEnd={(moveObj) => {
+              if (onMoveBuilding) onMoveBuilding(moveObj);
+            }}
+            gameBuildings={gameState.buildings || []}
+            // ✅ إضافة خاصية zIndex ثابتة للجميع
+            style={{ zIndex: 1 }}
+          />
+        );
+      });
   }
 
   return (
@@ -81,11 +95,13 @@ export default function Map({
         onCameraOffsetChange={handleCameraOffsetChange}
       >
         <View style={styles.mapContainer}>
+          {/* ✅ الخلفية */}
           <Image
             source={require("../assets/images/Game_floor.jpg")}
             style={styles.backgroundImage}
           />
 
+          {/* ✅ طبقة المباني الواحدة - مبسطة */}
           <View
             style={[
               styles.buildingLayer,
@@ -102,6 +118,7 @@ export default function Map({
         </View>
       </Camera>
 
+      {/* نافذة الترقية */}
       {selectedBuilding && (
         <UpgradePopup
           building={selectedBuilding}
@@ -116,6 +133,7 @@ export default function Map({
         />
       )}
 
+      {/* زر المتجر */}
       <ShopButton
         onPress={() => onOpenShop(true)}
         style={styles.shopButtonPlacement}
@@ -128,27 +146,29 @@ const styles = StyleSheet.create({
   fullScreen: {
     flex: 1,
     backgroundColor: "#1b4d2e",
+    overflow: 'hidden', // ✅ منع التجاوزات
   },
-
   mapContainer: {
     width: MAP_WIDTH,
     height: MAP_HEIGHT,
+    position: 'relative',
   },
-
   backgroundImage: {
     width: MAP_WIDTH,
     height: MAP_HEIGHT,
     position: "absolute",
-    resizeMode: "stretch",
+    resizeMode: "cover", // ✅ تغيير من stretch إلى cover
   },
-
   buildingLayer: {
     position: "absolute",
+    // ✅ إزالة أي تأثيرات طبقات
+    elevation: 1,
+    zIndex: 1,
   },
-
   shopButtonPlacement: {
     position: "absolute",
     bottom: 10,
     left: screenW / 2 - 50,
+    zIndex: 100, // ✅ أعلى من المباني
   },
 });
