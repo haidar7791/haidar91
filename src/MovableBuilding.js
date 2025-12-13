@@ -1,4 +1,4 @@
-// src/MovableBuilding.js - الإصدار المصحح
+// src/MovableBuilding.js - النسخة النهائية
 import React, { useRef, useEffect, useState } from 'react';
 import { View, Image, Animated, Text, StyleSheet, Alert } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -6,6 +6,38 @@ import TimerDisplay from './TimerDisplay';
 import { BUILDINGS } from './BuildingData';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// ✅ دالة للتحقق من التداخل المسموح (النصف السفلي فقط)
+const isOverlapAllowed = (x1, y1, size1, x2, y2, size2) => {
+  // مسموح بالتداخل في النصف السفلي فقط (50%) من المباني
+  const overlapThreshold = 0.5;
+  
+  // إحداثيات المباني
+  const top1 = y1;
+  const bottom1 = y1 + size1;
+  const top2 = y2;
+  const bottom2 = y2 + size2;
+  
+  // نقطة منتصف كل مبنى
+  const mid1 = top1 + (size1 / 2);
+  const mid2 = top2 + (size2 / 2);
+  
+  // إذا كان التداخل في النصف السفلي فقط
+  // النقطة الوسطى للمبنى 1 يجب أن تكون أعلى من النقطة الوسطى للمبنى 2
+  // (المبنى الأقرب للشاشة يظهر فوق المبنى الأبعد)
+  if (mid1 < mid2) {
+    // المبنى 1 أقرب للشاشة (y أصغر)، يظهر فوق المبنى 2
+    return true;
+  }
+  
+  return false;
+};
+
+// ✅ دالة لتحديد z-index بناءً على الموقع
+const calculateZIndex = (y, size) => {
+  // المباني الأعلى (y أصغر) تحصل على z-index أعلى
+  return Math.max(1, 1000 - Math.floor(y / size));
+};
 
 export default function MovableBuilding({
     building,
@@ -19,7 +51,7 @@ export default function MovableBuilding({
     isSelected = false,
     isMoving = false,
     style,
-    gameBuildings = [], // ✅ إضافة: قائمة المباني الأخرى للتحقق من التداخل
+    gameBuildings = [],
 }) {
     if (!buildingData) return null;
 
@@ -38,12 +70,16 @@ export default function MovableBuilding({
     const draggingRef = useRef(false);
     const lastValidPosition = useRef({ x: initialX, y: initialY });
 
-    const buildingSize = ((buildingData.size || building.size) || 1) * tileSize;
+    const buildingSizeTiles = buildingData.size || building.size || 1;
+    const buildingSize = buildingSizeTiles * tileSize;
 
-    const MAX_X = mapWidth - buildingSize;
-    const MAX_Y = mapHeight - buildingSize;
-    const MIN_X = 0;
-    const MIN_Y = 0;
+    // ✅ السماح بالمباني أن تكون بجوار بعضها (مسافة 10% فقط)
+    const PADDING = tileSize * 0.1;
+
+    const MAX_X = mapWidth - buildingSize + PADDING;
+    const MAX_Y = mapHeight - buildingSize + PADDING;
+    const MIN_X = -PADDING;
+    const MIN_Y = -PADDING;
 
     const initialTileX = building.x;
     const initialTileY = building.y;
@@ -61,7 +97,7 @@ export default function MovableBuilding({
     const imageSource = (BUILDINGS[building.type]?.levels?.[levelToShow]?.image) || buildingData.image;
 
     // -----------------------------------------------------------
-    // ✅ إصلاح مشكلة موقت الترقية - تحديث مستمر
+    // ✅ تحديث الوقت المتبقي
     // -----------------------------------------------------------
     const [remainingSec, setRemainingSec] = useState(() => {
         const finish = building.isBuilding ? building.buildFinishTime :
@@ -89,10 +125,8 @@ export default function MovableBuilding({
             setRemainingSec(seconds);
         };
 
-        // تحديث فوري أول مرة
         updateRemainingTime();
 
-        // تحديث كل ثانية إذا كان هناك وقت متبقي
         const finishTime = building.isBuilding ? building.buildFinishTime :
             (building.isUpgrading ? building.upgradeFinishTime : null);
 
@@ -106,13 +140,11 @@ export default function MovableBuilding({
     // ✅ دالة التحقق من التداخل مع المباني الأخرى
     // -----------------------------------------------------------
     const checkOverlap = (x, y, size, excludeId = building.id) => {
-        // تحويل الإحداثيات إلى مربعات
         const newLeft = x / tileSize;
         const newTop = y / tileSize;
         const newRight = newLeft + size;
         const newBottom = newTop + size;
 
-        // التحقق مع كل مبنى آخر
         for (const otherBuilding of gameBuildings) {
             if (otherBuilding.id === excludeId) continue;
 
@@ -122,11 +154,18 @@ export default function MovableBuilding({
             const otherRight = otherLeft + otherSize;
             const otherBottom = otherTop + otherSize;
 
-            // التحقق من التداخل
+            // ✅ التحقق من التداخل
             if (newLeft < otherRight &&
                 newRight > otherLeft &&
                 newTop < otherBottom &&
                 newBottom > otherTop) {
+                
+                // ✅ التحقق إذا كان التداخل مسموحاً به (النصف السفلي فقط)
+                if (isOverlapAllowed(newTop, newBottom, size, otherTop, otherBottom, otherSize)) {
+                    // مسموح بالتداخل - المبنى الأقرب للشاشة يظهر فوق الآخر
+                    continue;
+                }
+                
                 return { overlap: true, building: otherBuilding };
             }
         }
@@ -135,7 +174,7 @@ export default function MovableBuilding({
     };
 
     // -----------------------------------------------------------
-    // ✅ إصلاح مشكلة السحب والتحرير
+    // ✅ الإيماءات
     // -----------------------------------------------------------
     const longPress = Gesture.LongPress()
         .minDuration(250)
@@ -144,10 +183,9 @@ export default function MovableBuilding({
             setIsDragging(true);
             setShowInfo(false);
             setHasMoved(false);
-            
+
             if (onMoveStart) onMoveStart(building.id);
 
-            // ✅ حفظ الموقع الصالح الحالي
             lastValidPosition.current = {
                 x: currentX.__getValue(),
                 y: currentY.__getValue()
@@ -199,22 +237,28 @@ export default function MovableBuilding({
             const finalXValue = currentX.__getValue();
             const finalYValue = currentY.__getValue();
 
-            // ✅ تنسيق مع الشبكة
-            const snappedX = clamp(Math.round(finalXValue / tileSize) * tileSize, MIN_X, MAX_X);
-            const snappedY = clamp(Math.round(finalYValue / tileSize) * tileSize, MIN_Y, MAX_Y);
+            // ✅ تنسيق مع الشبكة مع مسافات أقل
+            const snappedX = clamp(
+                Math.round(finalXValue / (tileSize * 0.5)) * (tileSize * 0.5),
+                MIN_X, 
+                MAX_X
+            );
+            const snappedY = clamp(
+                Math.round(finalYValue / (tileSize * 0.5)) * (tileSize * 0.5),
+                MIN_Y, 
+                MAX_Y
+            );
 
             const newTileX = snappedX / tileSize;
             const newTileY = snappedY / tileSize;
 
-            // ✅ التحقق من التداخل مع المباني الأخرى
-            const buildingSizeTiles = buildingData.size || building.size || 1;
+            // ✅ التحقق من التداخل
             const overlapResult = checkOverlap(snappedX, snappedY, buildingSizeTiles);
 
-            if (overlapResult.overlap) {
-                // ❌ الموقع غير صالح - العودة للموقع السابق
+            if (overlapResult.overlap && overlapResult.building) {
                 Alert.alert(
-                    "لا يمكن وضع المبنى هنا",
-                    `يتداخل مع ${overlapResult.building ? 'مبنى آخر' : 'شيء ما'}`,
+                    "⚠️ تداخل",
+                    `لا يمكن وضع المبنى هنا`,
                     [{ text: "حسناً", style: "cancel" }]
                 );
 
@@ -230,7 +274,6 @@ export default function MovableBuilding({
                     draggingRef.current = false;
                     setIsDragging(false);
 
-                    // ✅ إخطار بالعودة للموقع الأصلي
                     if (onMoveEnd && hasMoved) {
                         onMoveEnd({
                             id: building.id,
@@ -243,7 +286,6 @@ export default function MovableBuilding({
                     }
                 });
             } else {
-                // ✅ الموقع صالح - تأكيد التحرير
                 Animated.spring(currentX, {
                     toValue: snappedX,
                     useNativeDriver: false
@@ -267,13 +309,11 @@ export default function MovableBuilding({
                     setIsDragging(false);
                 });
 
-                // ✅ تحديث الموقع الصالح
                 lastValidPosition.current = { x: snappedX, y: snappedY };
             }
         })
         .runOnJS(true);
 
-    // ✅ النقر البسيط لعرض المعلومات
     const tap = Gesture.Tap()
         .maxDuration(180)
         .maxDistance(10)
@@ -282,10 +322,8 @@ export default function MovableBuilding({
             if (draggingRef.current) return;
             if (onPress) onPress(building);
 
-            // ✅ تبديل عرض المعلومات
             setShowInfo(!showInfo);
 
-            // ✅ إخفاء المعلومات بعد 3 ثواني
             if (!showInfo) {
                 setTimeout(() => {
                     setShowInfo(false);
@@ -294,13 +332,12 @@ export default function MovableBuilding({
         })
         .runOnJS(true);
 
-    // ✅ دمج الإيماءات
     const composed = Gesture.Exclusive(
         tap,
         Gesture.Simultaneous(longPress, pan)
     );
 
-    // مزامنة التحديثات الخارجية
+    // ✅ مزامنة التحديثات الخارجية
     useEffect(() => {
         const targetX = (typeof building.x === 'number' ? building.x : 0) * tileSize;
         const targetY = (typeof building.y === 'number' ? building.y : 0) * tileSize;
@@ -318,15 +355,16 @@ export default function MovableBuilding({
             }).start();
         }
 
-        // ✅ تحديث الموقع الصالح
         lastValidPosition.current = { x: targetX, y: targetY };
     }, [building.x, building.y, tileSize]);
 
-    // ✅ الأنيميشن المحسنة
+    // ✅ حساب z-index بناءً على الموقع
+    const zIndexValue = calculateZIndex(currentY.__getValue(), buildingSize);
+
     const animatedStyle = {
         transform: [{ translateX: currentX }, { translateY: currentY }],
         opacity,
-        zIndex: isSelected ? 100 : (isDragging ? 1000 : 10),
+        zIndex: isSelected ? 1000 : (isDragging ? 2000 : zIndexValue),
         elevation: isSelected ? 10 : (isDragging ? 20 : 5),
     };
 
@@ -345,20 +383,29 @@ export default function MovableBuilding({
             >
                 {/* ✅ مؤشر السحب */}
                 {isDragging && (
-                    <View style={[styles.dragIndicator, { width: buildingSize + 10, height: buildingSize + 10 }]} />
+                    <View style={[styles.dragIndicator, { 
+                        width: buildingSize + 5,
+                        height: buildingSize + 5 
+                    }]} />
                 )}
 
                 {/* ✅ مؤشر التحديد */}
                 {isSelected && !isDragging && (
-                    <View style={[styles.selectionIndicator, { width: buildingSize + 8, height: buildingSize + 8 }]} />
+                    <View style={[styles.selectionIndicator, { 
+                        width: buildingSize + 4,
+                        height: buildingSize + 4 
+                    }]} />
                 )}
 
-                {/* ✅ موقت البناء/الترقية - مع إصلاح */}
+                {/* ✅ موقت البناء/الترقية */}
                 {(building.isBuilding || building.isUpgrading) && remainingSec > 0 && (
-                    <View style={[styles.timerWrap, { width: buildingSize, top: -25 }]}>
+                    <View style={[styles.timerWrap, { 
+                        width: buildingSize, 
+                        top: -20
+                    }]}>
                         <TimerDisplay
                             duration={remainingSec}
-                            autoStart={true} // ✅ تغيير إلى true
+                            autoStart={true}
                             style={styles.timerText}
                             showIcon={building.isUpgrading ? '⬆️' : '🛠️'}
                         />
@@ -388,41 +435,23 @@ export default function MovableBuilding({
                         styles.buildingImage,
                         {
                             borderColor: isSelected ? '#FFD700' : 'transparent',
-                            borderWidth: isSelected ? 2 : 0,
-                            shadowColor: isSelected ? '#FFD700' : (isDragging ? '#3498db' : 'transparent'),
-                            shadowOffset: isSelected ? { width: 0, height: 0 } : { width: 0, height: 0 },
-                            shadowOpacity: isSelected ? 0.8 : (isDragging ? 0.5 : 0),
-                            shadowRadius: isSelected ? 10 : (isDragging ? 8 : 0),
+                            borderWidth: isSelected ? 1 : 0,
                         }
                     ]}
                 />
 
-                {/* ✅ معلومات المبنى (تظهر عند النقر فقط) */}
+                {/* ✅ معلومات المبنى */}
                 {showInfo && !isDragging && (
-                    <View style={[styles.infoCard, { bottom: -buildingSize * 0.3 }]}>
+                    <View style={[styles.infoCard, { 
+                        bottom: -buildingSize * 0.25,
+                        padding: 6,
+                    }]}>
                         <Text style={styles.infoTitle}>
-                            {buildingData.name || building.type}
+                            {buildingData.name_ar || building.type}
                         </Text>
                         <Text style={styles.infoLevel}>
                             المستوى: {building.level || 1}
                         </Text>
-                        {buildingData.production && (
-                            <Text style={styles.infoProduction}>
-                                ⚡ {buildingData.production}/ساعة
-                            </Text>
-                        )}
-                        {buildingData.capacity && (
-                            <Text style={styles.infoCapacity}>
-                                📦 {buildingData.capacity}
-                            </Text>
-                        )}
-                    </View>
-                )}
-
-                {/* ✅ مؤشر مستوى المبنى (صغير ودائم) */}
-                {!showInfo && (
-                    <View style={styles.levelBadge}>
-                        <Text style={styles.levelText}>{building.level || 1}</Text>
                     </View>
                 )}
             </Animated.View>
@@ -433,138 +462,111 @@ export default function MovableBuilding({
 const styles = StyleSheet.create({
     dragIndicator: {
         position: 'absolute',
-        top: -5,
-        left: -5,
-        borderWidth: 2,
+        top: -2.5,
+        left: -2.5,
+        borderWidth: 1.5,
         borderColor: '#3498db',
-        borderRadius: 8,
+        borderRadius: 4,
         borderStyle: 'dashed',
-        opacity: 0.7,
+        opacity: 0.6,
     },
     selectionIndicator: {
         position: 'absolute',
-        top: -4,
-        left: -4,
-        borderWidth: 2,
+        top: -2,
+        left: -2,
+        borderWidth: 1.5,
         borderColor: '#FFD700',
-        borderRadius: 6,
+        borderRadius: 3,
         borderStyle: 'solid',
     },
     buildingImage: {
         width: '100%',
         height: '100%',
         resizeMode: 'contain',
-        borderRadius: 4,
+        borderRadius: 2,
     },
     timerWrap: {
         position: 'absolute',
         left: 0,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 12,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        paddingHorizontal: 6,
+        paddingVertical: 3,
+        borderRadius: 8,
         borderWidth: 1,
         borderColor: '#f1c40f',
         zIndex: 200,
     },
     timerText: {
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: '800',
         color: '#fff',
         fontFamily: 'monospace',
     },
     timerLabel: {
-        fontSize: 9,
+        fontSize: 8,
         color: '#f1c40f',
-        marginTop: 2,
+        marginTop: 1,
         fontWeight: '600',
     },
     infoCard: {
         position: 'absolute',
-        left: -20,
-        right: -20,
-        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-        padding: 8,
-        borderRadius: 8,
+        left: -15,
+        right: -15,
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        borderRadius: 6,
         borderWidth: 1,
         borderColor: '#34495e',
         alignItems: 'center',
         zIndex: 150,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.5,
-        shadowRadius: 8,
-        elevation: 10,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.4,
+        shadowRadius: 6,
+        elevation: 8,
     },
     infoTitle: {
         color: '#fff',
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: 'bold',
-        marginBottom: 2,
+        marginBottom: 1,
     },
     infoLevel: {
         color: '#f1c40f',
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: '600',
-        marginBottom: 2,
-    },
-    infoProduction: {
-        color: '#2ecc71',
-        fontSize: 9,
-    },
-    infoCapacity: {
-        color: '#3498db',
-        fontSize: 9,
-    },
-    levelBadge: {
-        position: 'absolute',
-        top: 2,
-        right: 2,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        width: 16,
-        height: 16,
-        borderRadius: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: '#f1c40f',
-    },
-    levelText: {
-        color: '#fff',
-        fontSize: 9,
-        fontWeight: 'bold',
+        marginBottom: 1,
     },
     upgradeBadge: {
         position: 'absolute',
-        top: 2,
-        left: 2,
+        top: 1,
+        left: 1,
         backgroundColor: '#9b59b6',
-        width: 16,
-        height: 16,
-        borderRadius: 8,
+        width: 14,
+        height: 14,
+        borderRadius: 7,
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 50,
     },
     upgradeText: {
         color: '#fff',
-        fontSize: 9,
+        fontSize: 8,
     },
     buildBadge: {
         position: 'absolute',
-        top: 2,
-        left: 2,
+        top: 1,
+        left: 1,
         backgroundColor: '#e74c3c',
-        width: 16,
-        height: 16,
-        borderRadius: 8,
+        width: 14,
+        height: 14,
+        borderRadius: 7,
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 50,
     },
     buildText: {
-        fontSize: 8,
+        fontSize: 7,
     },
 });

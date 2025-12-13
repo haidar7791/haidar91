@@ -1,4 +1,4 @@
-// src/useGameLogic.js - الإصدار المعدل
+// src/useGameLogic.js - الإصدار النهائي
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BUILDINGS } from "./BuildingData";
 import * as gameState from "./gameState";
@@ -64,11 +64,11 @@ const overlapsExisting = (buildings = [], x, y, size, excludeId = null) => {
   const newTiles = occupiedTiles(x, y, size).map((t) => `${t[0]}_${t[1]}`);
   for (const b of buildings) {
     if (excludeId && b.id === excludeId) continue;
-    
+
     const bData = BUILDINGS[b.type];
     const bSize = bData?.size || 1;
     const bTiles = occupiedTiles(b.x, b.y, bSize).map((t) => `${t[0]}_${t[1]}`);
-    
+
     for (const t of bTiles) {
       if (newTiles.includes(t)) {
         return { overlap: true, building: b };
@@ -85,11 +85,11 @@ const findEmptySpotForBuilding = (buildings, size) => {
     const bData = BUILDINGS[b.type];
     return bData && (bData.size || 1) === size;
   });
-  
+
   if (similarBuildings.length > 0) {
     // ابحث حول آخر مبنى مشابه
     const lastSimilar = similarBuildings[similarBuildings.length - 1];
-    
+
     // مواقع محيطة مقترحة
     const adjacentSpots = [
       { x: lastSimilar.x + size + 1, y: lastSimilar.y }, // يمين
@@ -97,11 +97,11 @@ const findEmptySpotForBuilding = (buildings, size) => {
       { x: lastSimilar.x - size - 1, y: lastSimilar.y }, // يسار
       { x: lastSimilar.x, y: lastSimilar.y - size - 1 }, // أعلى
     ];
-    
+
     for (const spot of adjacentSpots) {
       if (spot.x >= 1 && spot.x + size <= MAP_TILES_X - 1 &&
           spot.y >= 1 && spot.y + size <= MAP_TILES_Y - 1) {
-        
+
         const overlap = overlapsExisting(buildings, spot.x, spot.y, size);
         if (!overlap.overlap) {
           return spot;
@@ -109,7 +109,7 @@ const findEmptySpotForBuilding = (buildings, size) => {
       }
     }
   }
-  
+
   // ثانياً: البحث المنظم من الأعلى لليسار
   for (let y = 1; y <= MAP_TILES_Y - size; y++) {
     for (let x = 1; x <= MAP_TILES_X - size; x++) {
@@ -120,20 +120,20 @@ const findEmptySpotForBuilding = (buildings, size) => {
         for (const building of buildings) {
           const distanceX = Math.abs((x + size/2) - (building.x + ((BUILDINGS[building.type]?.size || 1)/2)));
           const distanceY = Math.abs((y + size/2) - (building.y + ((BUILDINGS[building.type]?.size || 1)/2)));
-          
+
           if (distanceX < 2 && distanceY < 2) {
             hasSpace = false;
             break;
           }
         }
-        
+
         if (hasSpace) {
           return { x, y };
         }
       }
     }
   }
-  
+
   // أخيراً: أي مكان فارغ
   for (let y = 1; y <= MAP_TILES_Y - size; y++) {
     for (let x = 1; x <= MAP_TILES_X - size; x++) {
@@ -143,13 +143,70 @@ const findEmptySpotForBuilding = (buildings, size) => {
       }
     }
   }
-  
+
   return null;
+};
+
+// ✅ دالة للحصول على مستوى القلعة الحالي
+const getCurrentTownHallLevel = (buildings) => {
+  const townHall = buildings?.find(b => b.type === "Town_Hall");
+  return townHall ? townHall.level : 1;
+};
+
+// ✅ دالة للتحقق مما إذا كان مبنى مفتوحًا لمستوى القلعة الحالي
+const isBuildingUnlocked = (buildingKey, buildings) => {
+  const townHallLevel = getCurrentTownHallLevel(buildings);
+  const building = BUILDINGS[buildingKey];
+  
+  if (!building) return false;
+  
+  // إذا كان للمبنى شرط مستوى قلعة محدد
+  if (building.levels?.[1]?.requiresTownHall) {
+    return townHallLevel >= building.levels[1].requiresTownHall;
+  }
+  
+  // التحقق من قائمة Unlocks في مستويات القلعة
+  for (let level = 1; level <= townHallLevel; level++) {
+    const townHallData = BUILDINGS["Town_Hall"]?.levels?.[level];
+    if (townHallData?.unlocks?.includes(buildingKey)) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+
+// ✅ دالة للتحقق مما إذا كان يمكن إضافة مبنى (بناءً على maxCount)
+const canAddBuilding = (buildingKey, existingBuildings) => {
+  const building = BUILDINGS[buildingKey];
+  if (!building) return false;
+  
+  // استثناء مبنى القاعدة - يمكن ترقيته فقط
+  if (buildingKey === "Town_Hall") {
+    return false;
+  }
+  
+  // استثناء كوخ البناء - يظهر في البداية فقط
+  if (buildingKey === "Builder_Hut") {
+    const currentCount = existingBuildings.filter(b => b.type === buildingKey).length;
+    return currentCount < 1;
+  }
+  
+  // إذا كان للمبنى حد أقصى محدد
+  if (building.maxCount !== undefined) {
+    const currentCount = existingBuildings.filter(b => b.type === buildingKey).length;
+    return currentCount < building.maxCount;
+  }
+  
+  return true;
 };
 
 const useGameLogic = (initialSavedState) => {
   const [currentGameState, setGameState] = useState(initialSavedState || gameState.getInitialState());
   const lastUpdate = useRef(Date.now());
+
+  // ✅ الحصول على مستوى القلعة الحالي
+  const currentTownHallLevel = getCurrentTownHallLevel(currentGameState.buildings || []);
 
   // ✅ تهيئة البنائين
   useEffect(() => {
@@ -158,9 +215,9 @@ const useGameLogic = (initialSavedState) => {
       const total = prev.totalBuilders !== undefined ? prev.totalBuilders : ensureBuildersFromBuildings(buildings);
       const busy = buildings.reduce((acc, b) => acc + ((b.isBuilding || b.isUpgrading) ? 1 : 0), 0);
       const available = Math.max(0, total - busy);
-      
+
       if (prev.totalBuilders === total && prev.availableBuilders === available) return prev;
-      
+
       const updated = { ...prev, totalBuilders: total, availableBuilders: available };
       gameState.saveGameState(updated);
       return updated;
@@ -184,16 +241,16 @@ const useGameLogic = (initialSavedState) => {
       // ✅ الإنتاج: للمباني غير قيد البناء/الترقية
       for (const b of buildings) {
         if (b.isBuilding || b.isUpgrading) continue;
-        
+
         const bData = BUILDINGS[b.type];
         const levInfo = bData?.levels?.[b.level] || {};
         const production = levInfo.production || {};
-        
+
         for (const [res, rate] of Object.entries(production)) {
           if (rate > 0) {
             const gain = (rate * dt) / 1000;
             newResources[res] = Math.floor((newResources[res] || 0) + gain);
-            
+
             // عدم تجاوز السعة
             if (prev.storageCapacity && prev.storageCapacity[res]) {
               newResources[res] = Math.min(newResources[res], prev.storageCapacity[res]);
@@ -284,7 +341,7 @@ const useGameLogic = (initialSavedState) => {
       console.error(`[addBuilding] نوع غير معروف: ${type}`);
       return { success: false, error: "نوع المبنى غير معروف" };
     }
-    
+
     setGameState((prev) => {
       const nextLevel = 1;
       const lvlInfo = buildingData.levels?.[nextLevel] || {};
@@ -297,13 +354,20 @@ const useGameLogic = (initialSavedState) => {
         return prev;
       }
 
+      // ✅ التحقق مما إذا كان يمكن إضافة المبنى
+      const currentCount = (prev.buildings || []).filter(b => b.type === type).length;
+      if (buildingData.maxCount !== undefined && currentCount >= buildingData.maxCount) {
+        console.warn(`[addBuilding] وصلت للحد الأقصى لهذا المبنى (${currentCount}/${buildingData.maxCount})`);
+        return prev;
+      }
+
       let x, y;
-      
+
       // ✅ إذا تم تحديد موقع مخصص
       if (customX !== null && customY !== null) {
         x = customX;
         y = customY;
-        
+
         // التحقق من التداخل في الموقع المخصص
         const overlap = overlapsExisting(prev.buildings || [], x, y, size);
         if (overlap.overlap) {
@@ -324,11 +388,11 @@ const useGameLogic = (initialSavedState) => {
       // ✅ التحقق من البنائين المتاحين
       const buildSec = lvlInfo.buildTime || 0;
       const buildMs = Math.max(0, buildSec * 1000);
-      
+
       let totalBuilders = prev.totalBuilders ?? ensureBuildersFromBuildings(prev.buildings || []);
       let busyCount = (prev.buildings || []).filter((b) => b.isBuilding || b.isUpgrading).length;
       let availableBuilders = prev.availableBuilders !== undefined ? prev.availableBuilders : Math.max(0, totalBuilders - busyCount);
-      
+
       if (buildMs > 0 && availableBuilders <= 0) {
         console.warn("[addBuilding] جميع البنائين مشغولون!");
         return prev;
@@ -339,7 +403,7 @@ const useGameLogic = (initialSavedState) => {
 
       // ✅ إنشاء المبنى الجديد
       const id = `b_${Date.now()}_${Math.floor(Math.random() * 9999)}`;
-      const newB = new BuildingClass(id, type, nextLevel, x, y);
+      const newB = new BuildingClass(id, type, nextLevel, x, y, buildingData);
 
       if (buildMs > 0) {
         newB.isBuilding = true;
@@ -378,7 +442,7 @@ const useGameLogic = (initialSavedState) => {
     setGameState((prev) => {
       const idx = (prev.buildings || []).findIndex((b) => b.id === buildingId);
       if (idx === -1) return prev;
-      
+
       let totalBuilders = prev.totalBuilders ?? ensureBuildersFromBuildings(prev.buildings || []);
       let busyCount = (prev.buildings || []).filter((b) => b.isBuilding || b.isUpgrading).length;
       let availableBuilders = prev.availableBuilders !== undefined ? prev.availableBuilders : Math.max(0, totalBuilders - busyCount);
@@ -387,7 +451,7 @@ const useGameLogic = (initialSavedState) => {
         console.warn("[startUpgrade] جميع البنائين مشغولون!");
         return prev;
       }
-      
+
       if (!canAfford(prev.resources || {}, cost)) {
         console.warn("[startUpgrade] لا تكفي الموارد");
         return prev;
@@ -395,12 +459,12 @@ const useGameLogic = (initialSavedState) => {
 
       const newResources = deductCost(prev.resources || {}, cost);
       const buildings = (prev.buildings || []).map((b) => ({ ...b }));
-      
+
       buildings[idx].isUpgrading = true;
       buildings[idx].upgradeFinishTime = Date.now() + (durationMs || 0);
 
       availableBuilders = Math.max(0, availableBuilders - 1);
-      
+
       const newState = {
         ...prev,
         resources: newResources,
@@ -408,7 +472,7 @@ const useGameLogic = (initialSavedState) => {
         totalBuilders,
         availableBuilders,
       };
-      
+
       gameState.saveGameState(newState);
       return newState;
     });
@@ -425,27 +489,27 @@ const useGameLogic = (initialSavedState) => {
 
       const bIndex = (prev.buildings || []).findIndex((b) => b.id === id);
       if (bIndex === -1) return prev;
-      
+
       const moving = prev.buildings[bIndex];
       const size = BUILDINGS[moving.type]?.size || moving.size || 1;
-      
+
       // ✅ التحقق من التداخل (استثناء المبنى المتحرك)
       const other = (prev.buildings || []).filter((b) => b.id !== id);
       const overlap = overlapsExisting(other, newX, newY, size);
-      
+
       if (overlap.overlap) {
         console.warn(`[moveBuilding] لا يمكن وضع ${moving.type} في (${newX},${newY}) - يتداخل مع ${overlap.building?.type}`);
-        
+
         // ✅ العودة للمكان الأصلي مع رسالة خطأ
         alert(`⚠️ لا يمكن وضع المبنى هنا!\nيتداخل مع ${overlap.building ? 'مبنى آخر' : 'شيء ما'}`);
         return prev;
       }
-      
+
       // ✅ الموقع صالح - التحرير
-      const newBuildings = (prev.buildings || []).map((b) => 
+      const newBuildings = (prev.buildings || []).map((b) =>
         b.id === id ? { ...b, x: newX, y: newY } : b
       );
-      
+
       const updated = { ...prev, buildings: newBuildings };
       gameState.saveGameState(updated);
       console.log(`✅ تم تحريك ${moving.type} إلى (${newX}, ${newY})`);
@@ -472,6 +536,11 @@ const useGameLogic = (initialSavedState) => {
     startUpgrade,
     moveBuilding,
     collectResources,
+    // ✅ الوظائف الجديدة
+    getTownHallLevel: () => getCurrentTownHallLevel(currentGameState.buildings || []),
+    isBuildingUnlocked: (buildingKey) => isBuildingUnlocked(buildingKey, currentGameState.buildings || []),
+    canAddBuilding: (buildingKey) => canAddBuilding(buildingKey, currentGameState.buildings || []),
+    currentTownHallLevel, // ✅ مستوى القلعة الحالي
   };
 };
 

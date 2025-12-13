@@ -71,10 +71,10 @@ export const isPositionEmpty = (buildings, x, y, size = 1, excludeId = null) => 
     for (let dy = 0; dy < size; dy++) {
       const checkX = x + dx;
       const checkY = y + dy;
-      
+
       for (const building of buildings) {
         if (excludeId && building.id === excludeId) continue;
-        
+
         const bSize = building.size || 1;
         if (checkX >= building.x && checkX < building.x + bSize &&
             checkY >= building.y && checkY < building.y + bSize) {
@@ -97,20 +97,20 @@ export const findEmptySpotForBuilding = (buildings, size = 1) => {
         for (const building of buildings) {
           const distanceX = Math.abs((x + size/2) - (building.x + (building.size||1)/2));
           const distanceY = Math.abs((y + size/2) - (building.y + (building.size||1)/2));
-          
+
           if (distanceX < 2 && distanceY < 2) {
             hasSpace = false;
             break;
           }
         }
-        
+
         if (hasSpace) {
           return { x, y };
         }
       }
     }
   }
-  
+
   // إذا لم يجد مع المسافات، ابحث عن أي مكان فارغ
   for (let y = 1; y <= MAP_TILES_Y - size; y++) {
     for (let x = 1; x <= MAP_TILES_X - size; x++) {
@@ -119,7 +119,7 @@ export const findEmptySpotForBuilding = (buildings, size = 1) => {
       }
     }
   }
-  
+
   return null;
 };
 
@@ -127,11 +127,11 @@ export const findEmptySpotForBuilding = (buildings, size = 1) => {
 export const addNewBuilding = (state, buildingType, buildingData, customX = null, customY = null) => {
   const newState = { ...state };
   const buildings = [...newState.buildings];
-  
+
   const size = buildingData.size || 1;
-  
+
   let x, y;
-  
+
   if (customX !== null && customY !== null) {
     // استخدام الموقع المخصص
     x = customX;
@@ -146,13 +146,13 @@ export const addNewBuilding = (state, buildingType, buildingData, customX = null
     x = spot.x;
     y = spot.y;
   }
-  
+
   // التحقق من صحة الموقع
   if (!isPositionEmpty(buildings, x, y, size)) {
     console.error("الموقع المحدد مشغول بالفعل");
     return null;
   }
-  
+
   // إنشاء المبنى الجديد
   const newBuilding = {
     id: `${buildingType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -166,7 +166,7 @@ export const addNewBuilding = (state, buildingType, buildingData, customX = null
     isBuilding: true,
     buildFinishTime: TimeUtils.now() + (buildingData.buildTime || 30), // 30 ثانية افتراضياً
   };
-  
+
   // خصم التكلفة
   if (buildingData.cost) {
     for (const [resource, amount] of Object.entries(buildingData.cost)) {
@@ -175,14 +175,14 @@ export const addNewBuilding = (state, buildingType, buildingData, customX = null
       }
     }
   }
-  
+
   // إضافة المبنى
   buildings.push(newBuilding);
   newState.buildings = buildings;
-  
+
   // تحديث البنائين المتاحين
   newState.availableBuilders = Math.max(0, newState.availableBuilders - 1);
-  
+
   return newState;
 };
 
@@ -190,35 +190,35 @@ export const addNewBuilding = (state, buildingType, buildingData, customX = null
 export const moveBuilding = (state, buildingId, newX, newY) => {
   const newState = { ...state };
   const buildings = [...newState.buildings];
-  
+
   const buildingIndex = buildings.findIndex(b => b.id === buildingId);
   if (buildingIndex === -1) return newState;
-  
+
   const building = { ...buildings[buildingIndex] };
   const size = building.size || 1;
-  
+
   // ✅ التحقق من صحة الموقع الجديد
   if (!isPositionEmpty(buildings, newX, newY, size, buildingId)) {
     console.log(`[moveBuilding] لا يمكن تحريك ${buildingId} إلى (${newX},${newY}) - الموقع مشغول`);
-    
+
     // ✅ إرجاع المبنى إلى موقعه الأصلي
     building.x = building.x; // البقاء في نفس المكان
     building.y = building.y;
-    
+
     buildings[buildingIndex] = building;
     newState.buildings = buildings;
-    
+
     // ✅ إرجاع حالة الخطأ
     return { ...newState, moveError: "الموقع مشغول" };
   }
-  
+
   // ✅ الموقع صالح - التحرير
   building.x = newX;
   building.y = newY;
-  
+
   buildings[buildingIndex] = building;
   newState.buildings = buildings;
-  
+
   return newState;
 };
 
@@ -229,7 +229,7 @@ export const getBuildingInfo = (buildingType, buildingData) => {
     console.warn(`Building type ${buildingType} not found in BuildingData`);
     return null;
   }
-  
+
   return {
     name: building.name || buildingType,
     size: building.size || 1,
@@ -252,10 +252,10 @@ export const saveGameState = async (state) => {
   try {
     // ✅ تحديث وقت التحديث الأخير
     state.lastUpdateTime = TimeUtils.now();
-    
+
     // ✅ تحديث مواقع المباني قبل الحفظ
     state.buildingPositions = updateBuildingPositions(state.buildings);
-    
+
     const jsonValue = JSON.stringify(state);
     await AsyncStorage.setItem(GAME_STATE_KEY, jsonValue);
     console.log("[gameState] تم حفظ الحالة");
@@ -270,25 +270,109 @@ export const loadGameState = async () => {
     const jsonValue = await AsyncStorage.getItem(GAME_STATE_KEY);
     if (jsonValue !== null) {
       const parsed = JSON.parse(jsonValue);
-      
+
       // ✅ تأكد من وجود الحقول الأساسية
       if (!parsed.lastUpdateTime) parsed.lastUpdateTime = TimeUtils.now();
       if (!parsed.buildings) parsed.buildings = [];
-      
+
       // ✅ تحديث مواقع المباني
       parsed.buildingPositions = updateBuildingPositions(parsed.buildings);
-      
+
       console.log("[gameState] تم تحميل الحالة");
       return parsed;
     }
   } catch (e) {
     console.error("[gameState] خطأ في التحميل:", e);
   }
-  
+
   // ✅ إرجاع الحالة الابتدائية مع تحديث المواقع
   const initialState = getInitialState();
   initialState.buildingPositions = updateBuildingPositions(initialState.buildings);
   return initialState;
+};
+
+// ✅ دالة للحصول على مستوى القلعة من المباني
+export const getTownHallLevel = (buildings) => {
+  const townHall = buildings?.find(b => b.type === TOWN_HALL_ID);
+  return townHall ? townHall.level : 1;
+};
+
+// ✅ دالة للتحقق مما إذا كان يمكن ترقية مبنى بناءً على مستوى القلعة
+export const canUpgradeByTownHall = (buildingType, currentLevel, townHallLevel) => {
+  if (buildingType === TOWN_HALL_ID) {
+    return true; // القلعة يمكن ترقيتها دائمًا
+  }
+  
+  // لا يمكن أن يكون مستوى المبنى أعلى من مستوى القلعة
+  return currentLevel + 1 <= townHallLevel;
+};
+
+// ✅ دالة للحصول على المباني المفتوحة لمستوى القلعة الحالي
+export const getUnlockedBuildings = (buildings, buildingData) => {
+  const townHallLevel = getTownHallLevel(buildings);
+  const unlocked = [];
+  
+  for (const [key, building] of Object.entries(buildingData || {})) {
+    if (building.canBePlaced && key !== TOWN_HALL_ID) {
+      // التحقق إذا كان المبنى مفتوحًا لهذا المستوى
+      if (building.levels?.[1]?.requiresTownHall) {
+        if (townHallLevel >= building.levels[1].requiresTownHall) {
+          unlocked.push(key);
+        }
+      } else if (building.levels?.[1]) {
+        // المباني الأساسية
+        unlocked.push(key);
+      }
+    }
+  }
+  
+  return unlocked;
+};
+
+// ✅ دالة للتحقق مما إذا كان مبنى مفتوحًا
+export const isBuildingUnlocked = (buildingKey, buildings, buildingData) => {
+  const townHallLevel = getTownHallLevel(buildings);
+  const building = buildingData?.[buildingKey];
+  
+  if (!building) return false;
+  
+  // إذا كان للمبنى شرط مستوى قلعة محدد
+  if (building.levels?.[1]?.requiresTownHall) {
+    return townHallLevel >= building.levels[1].requiresTownHall;
+  }
+  
+  // التحقق من قائمة Unlocks في مستويات القلعة
+  for (let level = 1; level <= townHallLevel; level++) {
+    const townHallData = buildingData?.[TOWN_HALL_ID]?.levels?.[level];
+    if (townHallData?.unlocks?.includes(buildingKey)) {
+      return true;
+    }
+  }
+  
+  // المباني الأساسية المفتوحة من البداية
+  const defaultUnlocked = ["Cobalt_Mine", "Elixir_Collector", "Builder_Hut"];
+  if (defaultUnlocked.includes(buildingKey)) {
+    return true;
+  }
+  
+  return false;
+};
+
+// ✅ دالة للتحقق مما إذا كان يمكن إضافة مبنى (بناءً على maxCount)
+export const canAddBuilding = (buildingKey, buildings, buildingData) => {
+  const building = buildingData?.[buildingKey];
+  if (!building) return false;
+  
+  // إذا لم يكن هناك maxCount محدد، يمكن إضافة واحد
+  if (building.maxCount === undefined) {
+    return true;
+  }
+  
+  // حساب عدد المباني الحالية من هذا النوع
+  const currentCount = buildings.filter(b => b.type === buildingKey).length;
+  
+  // التحقق من الحد الأقصى
+  return currentCount < building.maxCount;
 };
 
 export default {
@@ -300,4 +384,10 @@ export default {
   isPositionEmpty,
   findEmptySpotForBuilding,
   getBuildingInfo,
+  // ✅ أضف الدوال الجديدة
+  getTownHallLevel,
+  canUpgradeByTownHall,
+  getUnlockedBuildings,
+  isBuildingUnlocked,
+  canAddBuilding,
 };
