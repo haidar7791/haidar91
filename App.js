@@ -316,6 +316,8 @@ export default function App() {
           resources={gameState.resources}
           toggleShop={toggleShop}
           startPlacing={startPlacing}
+          townHallLevel={gameState.buildings?.find(b => b.type === "Town_Hall")?.level || 1}
+          existingBuildings={gameState.buildings}
         />
       </View>
     </GestureHandlerRootView>

@@ -157,14 +157,14 @@ const getCurrentTownHallLevel = (buildings) => {
 const isBuildingUnlocked = (buildingKey, buildings) => {
   const townHallLevel = getCurrentTownHallLevel(buildings);
   const building = BUILDINGS[buildingKey];
-  
+
   if (!building) return false;
-  
+
   // إذا كان للمبنى شرط مستوى قلعة محدد
   if (building.levels?.[1]?.requiresTownHall) {
     return townHallLevel >= building.levels[1].requiresTownHall;
   }
-  
+
   // التحقق من قائمة Unlocks في مستويات القلعة
   for (let level = 1; level <= townHallLevel; level++) {
     const townHallData = BUILDINGS["Town_Hall"]?.levels?.[level];
@@ -172,32 +172,37 @@ const isBuildingUnlocked = (buildingKey, buildings) => {
       return true;
     }
   }
-  
+
   return false;
 };
 
-// ✅ دالة للتحقق مما إذا كان يمكن إضافة مبنى (بناءً على maxCount)
+// ✅ دالة للتحقق مما إذا كان يمكن إضافة مبنى (بناءً على maxCount ومستوى القلعة)
 const canAddBuilding = (buildingKey, existingBuildings) => {
   const building = BUILDINGS[buildingKey];
   if (!building) return false;
-  
+
   // استثناء مبنى القاعدة - يمكن ترقيته فقط
   if (buildingKey === "Town_Hall") {
     return false;
   }
-  
-  // استثناء كوخ البناء - يظهر في البداية فقط
+
+  // ✅ استثناء كوخ البناء - يظهر في البداية ويمكن بناؤه دوماً
   if (buildingKey === "Builder_Hut") {
     const currentCount = existingBuildings.filter(b => b.type === buildingKey).length;
     return currentCount < 1;
   }
-  
+
+  // ✅ التحقق من فتح المبنى بناءً على مستوى القلعة
+  if (!isBuildingUnlocked(buildingKey, existingBuildings)) {
+    return false;
+  }
+
   // إذا كان للمبنى حد أقصى محدد
   if (building.maxCount !== undefined) {
     const currentCount = existingBuildings.filter(b => b.type === buildingKey).length;
     return currentCount < building.maxCount;
   }
-  
+
   return true;
 };
 
@@ -206,7 +211,7 @@ const useGameLogic = (initialSavedState) => {
   const lastUpdate = useRef(Date.now());
 
   // ✅ الحصول على مستوى القلعة الحالي
-  const currentTownHallLevel = getCurrentTownHallLevel(currentGameState.buildings || []);
+  const currentTownHallLevel = currentGameState.buildings?.find(b => b.type === "Town_Hall")?.level || 1;
 
   // ✅ تهيئة البنائين
   useEffect(() => {
@@ -249,7 +254,8 @@ const useGameLogic = (initialSavedState) => {
         for (const [res, rate] of Object.entries(production)) {
           if (rate > 0) {
             const gain = (rate * dt) / 1000;
-            newResources[res] = Math.floor((newResources[res] || 0) + gain);
+            // استخدام القيم الكسرية لضمان دقة الإنتاج (بدون Math.floor)
+            newResources[res] = (newResources[res] || 0) + gain;
 
             // عدم تجاوز السعة
             if (prev.storageCapacity && prev.storageCapacity[res]) {
@@ -276,6 +282,12 @@ const useGameLogic = (initialSavedState) => {
 
           availableBuilders = Math.min(totalBuilders, availableBuilders + 1);
           changed = true;
+
+          // ✅ تحديث فوري ومباشر لمستوى القلعة في الحالة
+          if (out.type === "Town_Hall") {
+            console.log(`🏰 Town Hall upgraded to level ${out.level}`);
+            // سيتم حفظ الحالة تلقائياً بسبب changed = true
+          }
 
           // إذا أضاف المستوى بنائين
           const levelInfo = BUILDINGS[out.type]?.levels?.[out.level];
@@ -355,9 +367,8 @@ const useGameLogic = (initialSavedState) => {
       }
 
       // ✅ التحقق مما إذا كان يمكن إضافة المبنى
-      const currentCount = (prev.buildings || []).filter(b => b.type === type).length;
-      if (buildingData.maxCount !== undefined && currentCount >= buildingData.maxCount) {
-        console.warn(`[addBuilding] وصلت للحد الأقصى لهذا المبنى (${currentCount}/${buildingData.maxCount})`);
+      if (!canAddBuilding(type, prev.buildings || [])) {
+        console.warn(`[addBuilding] لا يمكن إضافة ${type} حالياً (مغلق أو تجاوز الحد)`);
         return prev;
       }
 
@@ -442,6 +453,17 @@ const useGameLogic = (initialSavedState) => {
     setGameState((prev) => {
       const idx = (prev.buildings || []).findIndex((b) => b.id === buildingId);
       if (idx === -1) return prev;
+
+      const building = prev.buildings[idx];
+      const nextLevel = (building.level || 1) + 1;
+      const townHall = prev.buildings.find(b => b.type === "Town_Hall");
+      const currentTownHallLevel = townHall ? townHall.level : 1;
+
+      // ✅ منع الترقية إذا كان المستوى القادم أعلى من مستوى القلعة (باستثناء القلعة نفسها وكوخ البناء)
+      if (building.type !== "Town_Hall" && building.type !== "Builder_Hut" && nextLevel > currentTownHallLevel) {
+        console.warn(`[startUpgrade] لا يمكن ترقية ${building.type} لمستوى أعلى من مستوى القلعة (${currentTownHallLevel})`);
+        return prev;
+      }
 
       let totalBuilders = prev.totalBuilders ?? ensureBuildersFromBuildings(prev.buildings || []);
       let busyCount = (prev.buildings || []).filter((b) => b.isBuilding || b.isUpgrading).length;

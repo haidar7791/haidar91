@@ -52,12 +52,14 @@ export default function UpgradePopup({
 
   // ✅ هل يمكن الترقية بناءً على مستوى القلعة؟
   const canUpgradeByTownHall = useMemo(() => {
-    // ✅ استثناء مبنى القاعدة - يمكن ترقيته دائمًا
+    // ✅ استثناء مبنى القلعة - يمكن ترقيته دائمًا
     if (building.type === "Town_Hall") {
       return true;
     }
-    return canUpgradeBuilding(building.level + 1, townHallLevel);
-  }, [building.type, building.level, townHallLevel]); // ✅ تصحيح الخطأ: Town_HallLevel -> townHallLevel
+    // قراءة مستوى القلعة الفعلي من الحالة لضمان الدقة
+    // نستخدم القيمة الممرة من props لضمان التزامن
+    return (building.level + 1) <= townHallLevel;
+  }, [building.type, building.level, townHallLevel]);
 
   const isUpgrading = !!building.isUpgrading;
   const isBuilding = !!building.isBuilding;
@@ -90,7 +92,7 @@ export default function UpgradePopup({
   const handleUpgrade = () => {
     if (!nextLevelInfo) return;
 
-    // ✅ استثناء مبنى القاعدة - يمكن ترقيته دائمًا
+    // ✅ استثناء مبنى القلعة - يمكن ترقيته دائمًا
     if (building.type === "Town_Hall") {
       // فقط تحقق من الموارد
       if (!affordable) {
@@ -106,7 +108,7 @@ export default function UpgradePopup({
       if (!canUpgradeByTownHall) {
         Alert.alert(
           "🔒 مطلوب ترقية القلعة",
-          `تحتاج قلعة مستوى ${requiredTownHallLevel} لترقية هذا المبنى للمستوى ${building.level + 1}\n(مستوى قلعتك الحالي: ${townHallLevel})`,
+          `لا يمكن ترقية هذا المبنى لمستوى أعلى من مستوى القلعة الحالي (${townHallLevel})`,
           [{ text: "حسناً", style: "cancel" }]
         );
         return;
@@ -226,7 +228,7 @@ export default function UpgradePopup({
         </View>
 
         {/* ✅ معلومات مستوى القلعة المطلوب */}
-        {/* استثناء مبنى القاعدة من عرض متطلبات القلعة */}
+        {/* استثناء مبنى القلعة من عرض متطلبات القلعة */}
         {building.type !== "Town_Hall" && (
           <View style={styles.requirementSection}>
             <Text style={styles.requirementTitle}>متطلبات الترقية:</Text>
@@ -234,7 +236,7 @@ export default function UpgradePopup({
               styles.requirementText,
               { color: canUpgradeByTownHall ? '#4CAF50' : '#f44336' }
             ]}>
-              🏰 قلعة مستوى {requiredTownHallLevel}
+              🏰 قلعة مستوى {building.level + 1}
               {!canUpgradeByTownHall && ` (مستواك: ${townHallLevel})`}
             </Text>
             <Text style={styles.timeText}>
@@ -243,7 +245,7 @@ export default function UpgradePopup({
           </View>
         )}
 
-        {/* لمبنى القاعدة، نعرض فقط وقت البناء */}
+        {/* لمبنى القلعة، نعرض فقط وقت البناء */}
         {building.type === "Town_Hall" && (
           <View style={styles.requirementSection}>
             <Text style={styles.requirementTitle}>معلومات الترقية:</Text>
@@ -283,15 +285,23 @@ export default function UpgradePopup({
   );
 
   return (
-    <View style={styles.overlay}>
-      <View style={styles.popup}>
+    <TouchableOpacity
+      style={styles.overlay}
+      activeOpacity={1}
+      onPress={onClose}
+    >
+      <TouchableOpacity
+        activeOpacity={1}
+        style={styles.popup}
+        onPress={(e) => e.stopPropagation()}
+      >
         {renderHeader()}
         {renderCurrentLevelInfo()}
         {renderProgress()}
         {renderNextLevel()}
         {renderButtons()}
-      </View>
-    </View>
+      </TouchableOpacity>
+    </TouchableOpacity>
   );
 }
 
@@ -308,181 +318,181 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   popup: {
-    width: 320,
+    width: 280,
     backgroundColor: "#1E293B",
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 2,
+    padding: 15,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: "#334155",
-    maxHeight: "80%",
+    maxHeight: "75%",
   },
   header: {
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#334155",
-    paddingBottom: 10,
+    paddingBottom: 8,
   },
   title: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "bold",
     color: "#FFF",
-    marginBottom: 5,
+    marginBottom: 3,
     textAlign: "center",
   },
   level: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#F1C40F",
     fontWeight: "600",
   },
   currentTownHall: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#4CAF50",
     fontWeight: "600",
-    marginTop: 3,
+    marginTop: 2,
   },
   maxLevel: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#95A5A6",
-    marginTop: 3,
+    marginTop: 2,
   },
   section: {
-    marginVertical: 10,
+    marginVertical: 8,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
     color: "#FFF",
-    marginBottom: 10,
-    borderLeftWidth: 4,
+    marginBottom: 8,
+    borderLeftWidth: 3,
     borderLeftColor: "#3498DB",
-    paddingLeft: 8,
+    paddingLeft: 6,
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 6,
-    paddingHorizontal: 5,
+    marginBottom: 4,
+    paddingHorizontal: 3,
   },
   infoLabel: {
     color: "#95A5A6",
-    fontSize: 14,
+    fontSize: 13,
   },
   infoValue: {
     color: "#FFF",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
   },
   progressSection: {
     backgroundColor: "rgba(52, 152, 219, 0.1)",
-    padding: 12,
-    borderRadius: 10,
-    marginVertical: 10,
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 8,
     alignItems: "center",
   },
   progressText: {
     color: "#3498DB",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
-    marginBottom: 5,
+    marginBottom: 3,
   },
   timerText: {
     color: "#F1C40F",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
   },
   maxedSection: {
     backgroundColor: "rgba(46, 204, 113, 0.1)",
-    padding: 15,
-    borderRadius: 10,
+    padding: 12,
+    borderRadius: 8,
     alignItems: "center",
-    marginVertical: 15,
+    marginVertical: 12,
   },
   maxedText: {
     color: "#2ECC71",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
   },
   costSection: {
     backgroundColor: "rgba(0, 0, 0, 0.2)",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 8,
   },
   costTitle: {
     color: "#FFF",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   costRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 6,
-    paddingHorizontal: 5,
+    marginBottom: 4,
+    paddingHorizontal: 3,
   },
   resourceName: {
     color: "#95A5A6",
-    fontSize: 14,
+    fontSize: 13,
   },
   costAmount: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
   },
   requirementSection: {
     backgroundColor: "rgba(155, 89, 182, 0.1)",
-    padding: 12,
-    borderRadius: 8,
+    padding: 10,
+    borderRadius: 6,
   },
   requirementTitle: {
     color: "#FFF",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   requirementText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    marginBottom: 5,
+    marginBottom: 3,
   },
   timeText: {
     color: "#F1C40F",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
   },
   buttonsSection: {
-    marginTop: 15,
+    marginTop: 12,
   },
   upgradeBtn: {
     backgroundColor: "#2ECC71",
-    padding: 14,
-    borderRadius: 10,
+    padding: 12,
+    borderRadius: 8,
     alignItems: "center",
-    marginBottom: 10,
-    elevation: 3,
+    marginBottom: 8,
+    elevation: 2,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   disabledBtn: {
     backgroundColor: "#7F8C8D",
-    opacity: 0.7,
+    opacity: 0.6,
   },
   closeBtn: {
     backgroundColor: "#E74C3C",
-    padding: 14,
-    borderRadius: 10,
+    padding: 12,
+    borderRadius: 8,
     alignItems: "center",
-    elevation: 3,
+    elevation: 2,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
   btnText: {
     color: "#FFF",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
   },
 });

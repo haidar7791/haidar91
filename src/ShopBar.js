@@ -23,12 +23,17 @@ const RESOURCE_ARABIC_NAMES = {
 // دالة للتحقق مما إذا كان المبنى مفتوحًا بناءً على مستوى القلعة
 const isBuildingUnlocked = (buildingKey, townHallLevel) => {
   const building = BUILDINGS[buildingKey];
-  
+
+  // ✅ التحقق من خاصية requiresTownHall في جسم المبنى الرئيسي أولاً
+  if (building?.requiresTownHall) {
+    return townHallLevel >= building.requiresTownHall;
+  }
+
   // إذا كان للمبنى شرط مستوى قلعة محدد في المستوى الأول
   if (building?.levels?.[1]?.requiresTownHall) {
     return townHallLevel >= building.levels[1].requiresTownHall;
   }
-  
+
   // التحقق من قائمة Unlocks في مستويات القلعة
   for (let level = 1; level <= townHallLevel; level++) {
     const townHallData = BUILDINGS[TOWN_HALL_ID]?.levels?.[level];
@@ -36,7 +41,7 @@ const isBuildingUnlocked = (buildingKey, townHallLevel) => {
       return true;
     }
   }
-  
+
   return false;
 };
 
@@ -44,35 +49,35 @@ const isBuildingUnlocked = (buildingKey, townHallLevel) => {
 const canAddBuilding = (buildingKey, existingBuildings) => {
   const building = BUILDINGS[buildingKey];
   if (!building) return false;
-  
+
   // استثناء مبنى القاعدة - يمكن ترقيته فقط
   if (buildingKey === TOWN_HALL_ID) {
     return false;
   }
-  
+
   // استثناء كوخ البناء - يظهر في البداية فقط
   if (buildingKey === "Builder_Hut") {
     return false;
   }
-  
+
   // إذا كان للمبنى حد أقصى محدد
   if (building.maxCount !== undefined) {
     const buildingCount = existingBuildings.filter(b => b.type === buildingKey).length;
     return buildingCount < building.maxCount;
   }
-  
+
   // إذا لم يكن هناك maxCount محدد، يمكن إضافة واحد على الأقل
   return true;
 };
 
 // عنصر مبنى واحد (ShopItem)
-const ShopItem = ({ 
-  buildingKey, 
-  buildingData, 
-  resources, 
+const ShopItem = ({
+  buildingKey,
+  buildingData,
+  resources,
   startPlacing,
   canAddMore,
-  isUnlocked 
+  isUnlocked
 }) => {
 
   if (!buildingData || !buildingData.levels || !buildingData.levels[1] || !buildingData.levels[1].cost) {
@@ -108,11 +113,11 @@ const ShopItem = ({
   return (
     <TouchableOpacity
       style={[
-        styles.itemCard, 
-        { 
+        styles.itemCard,
+        {
           opacity: canPurchase ? 1 : 0.5,
-          borderColor: canPurchase ? '#4CAF50' : 
-                     (!isUnlocked ? '#9E9E9E' : 
+          borderColor: canPurchase ? '#4CAF50' :
+                     (!isUnlocked ? '#9E9E9E' :
                      (!canAddMore ? '#FF9800' : '#f44336'))
         }
       ]}
@@ -134,26 +139,26 @@ const ShopItem = ({
           {RESOURCE_ARABIC_NAMES[costType] || costType}
         </Text>
       </View>
-      
+
       {/* مؤشرات الحالة */}
       {!isUnlocked && (
         <View style={styles.lockBadge}>
           <Text style={styles.badgeText}>🔒</Text>
         </View>
       )}
-      
+
       {isUnlocked && !canAddMore && (
         <View style={styles.maxCountBadge}>
           <Text style={styles.badgeText}>🛑</Text>
         </View>
       )}
-      
+
       {isUnlocked && canAddMore && !isAffordable && (
         <View style={styles.costBadge}>
           <Text style={styles.badgeText}>💰</Text>
         </View>
       )}
-      
+
       {canPurchase && (
         <View style={styles.readyBadge}>
           <Text style={styles.badgeText}>✅</Text>
@@ -163,12 +168,13 @@ const ShopItem = ({
   );
 };
 
-export default function ShopBar({ 
-  shopVisible, 
-  resources, 
-  startPlacing, 
+export default function ShopBar({
+  shopVisible,
+  resources,
+  startPlacing,
   townHallLevel = 1,
-  existingBuildings = []
+  existingBuildings = [],
+  toggleShop // ✅ استلام الدالة هنا
 }) {
   const translateY = useState(new Animated.Value(shopVisible ? 0 : 100))[0];
   const [refreshKey, setRefreshKey] = useState(0);
@@ -187,64 +193,67 @@ export default function ShopBar({
   }, [shopVisible]);
 
   // تصفية المباني بناءً على مستوى القلعة والمباني الموجودة
-  const availableBuildings = Object.entries(BUILDINGS)
-    .filter(([key, data]) => {
-      // 1. استثناء القلعة وكوخ البناء
-      if (key === TOWN_HALL_ID || key === "Builder_Hut") return false;
+  const availableBuildings = useMemo(() => {
+    const currentTHLevel = townHallLevel; // القيمة ممرة بالفعل وتحدث عند تحديث الحالة
+    return Object.entries(BUILDINGS)
+      .filter(([key, data]) => {
+        // 1. استثناء القلعة وكوخ البناء
+        if (key === TOWN_HALL_ID || key === "Builder_Hut") return false;
 
-      // 2. التحقق من وجود البيانات الأساسية
-      if (!data || !data.levels || !data.levels[1] || !data.levels[1].cost) {
-        return false;
-      }
+        // 2. التحقق من وجود البيانات الأساسية
+        if (!data || !data.levels || !data.levels[1] || !data.levels[1].cost) {
+          return false;
+        }
 
-      // 3. فقط المباني التي يمكن وضعها
-      if (!data.canBePlaced) {
-        return false;
-      }
+        // 3. فقط المباني التي يمكن وضعها
+        if (!data.canBePlaced) {
+          return false;
+        }
 
-      // 4. التحقق مما إذا كان المبنى مفتوحًا لهذا المستوى من القلعة
-      const isUnlocked = isBuildingUnlocked(key, townHallLevel);
-      
-      // 5. التحقق مما إذا كان يمكن إضافة المبنى
-      const canAddMore = canAddBuilding(key, existingBuildings);
+        // 4. التحقق مما إذا كان المبنى مفتوحًا لهذا المستوى من القلعة
+        const isUnlocked = isBuildingUnlocked(key, townHallLevel);
 
-      return isUnlocked || canAddMore;
-    })
-    .sort(([keyA, dataA], [keyB, dataB]) => {
-      const isUnlockedA = isBuildingUnlocked(keyA, townHallLevel);
-      const isUnlockedB = isBuildingUnlocked(keyB, townHallLevel);
-      
-      // أولاً: المباني المفتوحة
-      if (isUnlockedA && !isUnlockedB) return -1;
-      if (!isUnlockedA && isUnlockedB) return 1;
-      
-      // ثانياً: المباني التي يمكن شراؤها
-      let costA, costB;
-      
-      if (dataA.levels[1].cost?.type && dataA.levels[1].cost?.amount) {
-        costA = dataA.levels[1].cost;
-      } else if (typeof dataA.levels[1].cost === 'object') {
-        const entriesA = Object.entries(dataA.levels[1].cost);
-        costA = entriesA.length > 0 ? { type: entriesA[0][0], amount: entriesA[0][1] } : null;
-      }
+        // 5. التحقق مما إذا كان يمكن إضافة المبنى
+        const canAddMore = canAddBuilding(key, existingBuildings);
 
-      if (dataB.levels[1].cost?.type && dataB.levels[1].cost?.amount) {
-        costB = dataB.levels[1].cost;
-      } else if (typeof dataB.levels[1].cost === 'object') {
-        const entriesB = Object.entries(dataB.levels[1].cost);
-        costB = entriesB.length > 0 ? { type: entriesB[0][0], amount: entriesB[0][1] } : null;
-      }
+        return isUnlocked || canAddMore;
+      })
+      .sort(([keyA, dataA], [keyB, dataB]) => {
+        const isUnlockedA = isBuildingUnlocked(keyA, townHallLevel);
+        const isUnlockedB = isBuildingUnlocked(keyB, townHallLevel);
 
-      if (costA && costB) {
-        const affordableA = (resources[costA.type] || 0) >= costA.amount;
-        const affordableB = (resources[costB.type] || 0) >= costB.amount;
+        // أولاً: المباني المفتوحة
+        if (isUnlockedA && !isUnlockedB) return -1;
+        if (!isUnlockedA && isUnlockedB) return 1;
 
-        if (affordableA && !affordableB) return -1;
-        if (!affordableA && affordableB) return 1;
-      }
+        // ثانياً: المباني التي يمكن شراؤها
+        let costA, costB;
 
-      return 0;
-    });
+        if (dataA.levels[1].cost?.type && dataA.levels[1].cost?.amount) {
+          costA = dataA.levels[1].cost;
+        } else if (typeof dataA.levels[1].cost === 'object') {
+          const entriesA = Object.entries(dataA.levels[1].cost);
+          costA = entriesA.length > 0 ? { type: entriesA[0][0], amount: entriesA[0][1] } : null;
+        }
+
+        if (dataB.levels[1].cost?.type && dataB.levels[1].cost?.amount) {
+          costB = dataB.levels[1].cost;
+        } else if (typeof dataB.levels[1].cost === 'object') {
+          const entriesB = Object.entries(dataB.levels[1].cost);
+          costB = entriesB.length > 0 ? { type: entriesB[0][0], amount: entriesB[0][1] } : null;
+        }
+
+        if (costA && costB) {
+          const affordableA = (resources[costA.type] || 0) >= costA.amount;
+          const affordableB = (resources[costB.type] || 0) >= costB.amount;
+
+          if (affordableA && !affordableB) return -1;
+          if (!affordableA && affordableB) return 1;
+        }
+
+        return 0;
+      });
+  }, [townHallLevel, existingBuildings, resources]);
 
   if (!shopVisible) return null;
 
@@ -252,12 +261,12 @@ export default function ShopBar({
   const affordableCount = availableBuildings.filter(([key, data]) => {
     const isUnlocked = isBuildingUnlocked(key, townHallLevel);
     const canAddMore = canAddBuilding(key, existingBuildings);
-    
+
     if (!isUnlocked || !canAddMore) return false;
-    
+
     const level1Data = data.levels[1];
     let costType, costAmount;
-    
+
     if (level1Data.cost?.type && level1Data.cost?.amount) {
       costType = level1Data.cost.type;
       costAmount = level1Data.cost.amount;
@@ -268,90 +277,107 @@ export default function ShopBar({
         costAmount = entries[0][1];
       }
     }
-    
+
     return costType && costAmount && (resources[costType] || 0) >= costAmount;
   }).length;
 
-  const unlockedCount = availableBuildings.filter(([key]) => 
+  const unlockedCount = availableBuildings.filter(([key]) =>
     isBuildingUnlocked(key, townHallLevel)
   ).length;
 
   return (
-    <Animated.View
-      key={refreshKey}
-      style={[styles.shopContainer, { transform: [{ translateY }] }]}
-    >
-      <View style={styles.shopHeader}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.shopTitle}>🏬 متجر المباني</Text>
-          <Text style={styles.levelText}>مستوى القلعة: {townHallLevel}</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <Text style={styles.statsText}>مفتوحة: {unlockedCount}</Text>
-          <Text style={[styles.statsText, { color: '#4CAF50' }]}>
-            قابلة للشراء: {affordableCount}
-          </Text>
-        </View>
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.outside}
+        activeOpacity={1}
+        onPress={() => toggleShop(false)}
+      />
+      <Animated.View
+        key={refreshKey}
+        style={[styles.shopContainer, { transform: [{ translateY }] }]}
       >
-        {availableBuildings.length > 0 ? (
-          availableBuildings.map(([key, data]) => {
-            const isUnlocked = isBuildingUnlocked(key, townHallLevel);
-            const canAddMore = canAddBuilding(key, existingBuildings);
-            
-            return (
-              <ShopItem
-                key={key}
-                buildingKey={key}
-                buildingData={data}
-                resources={resources}
-                startPlacing={startPlacing}
-                canAddMore={canAddMore}
-                isUnlocked={isUnlocked}
-              />
-            );
-          })
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>🏗️</Text>
-            <Text style={styles.emptyText}>
-              {townHallLevel < 8 ? 
-                "رقّي القلعة لفتح مباني جديدة" : 
-                "تم بناء جميع المباني المتاحة"}
+        <View style={styles.shopHeader}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.shopTitle}>🏬 متجر المباني</Text>
+            <Text style={styles.levelText}>مستوى القلعة: {townHallLevel}</Text>
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.statsText}>مفتوحة: {unlockedCount}</Text>
+            <Text style={[styles.statsText, { color: '#4CAF50' }]}>
+              قابلة للشراء: {affordableCount}
             </Text>
           </View>
-        )}
-      </ScrollView>
-      
-      {/* تذييل مع مفتاح الألوان */}
-      <View style={styles.footer}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: '#4CAF50' }]} />
-          <Text style={styles.legendText}>متاح للشراء</Text>
         </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: '#f44336' }]} />
-          <Text style={styles.legendText}>ناقص موارد</Text>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {availableBuildings.length > 0 ? (
+            availableBuildings.map(([key, data]) => {
+              const isUnlocked = isBuildingUnlocked(key, townHallLevel);
+              const canAddMore = canAddBuilding(key, existingBuildings);
+
+              return (
+                <ShopItem
+                  key={key}
+                  buildingKey={key}
+                  buildingData={data}
+                  resources={resources}
+                  startPlacing={startPlacing}
+                  canAddMore={canAddMore}
+                  isUnlocked={isUnlocked}
+                />
+              );
+            })
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>🏗️</Text>
+              <Text style={styles.emptyText}>
+                {townHallLevel < 8 ?
+                  "رقّي القلعة لفتح مباني جديدة" :
+                  "تم بناء جميع المباني المتاحة"}
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+
+        {/* تذييل مع مفتاح الألوان */}
+        <View style={styles.footer}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendColor, { backgroundColor: '#4CAF50' }]} />
+            <Text style={styles.legendText}>متاح للشراء</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendColor, { backgroundColor: '#f44336' }]} />
+            <Text style={styles.legendText}>ناقص موارد</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendColor, { backgroundColor: '#FF9800' }]} />
+            <Text style={styles.legendText}>وصل الحد الأقصى</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendColor, { backgroundColor: '#9E9E9E' }]} />
+            <Text style={styles.legendText}>مقفل</Text>
+          </View>
         </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: '#FF9800' }]} />
-          <Text style={styles.legendText}>وصل الحد الأقصى</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: '#9E9E9E' }]} />
-          <Text style={styles.legendText}>مقفل</Text>
-        </View>
-      </View>
-    </Animated.View>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    pointerEvents: 'box-none',
+  },
+  outside: {
+    flex: 1,
+  },
   shopContainer: {
     position: "absolute",
     bottom: 0,

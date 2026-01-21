@@ -1,6 +1,6 @@
 // src/Map.js
 import React, { useState, useCallback, useEffect } from "react";
-import { View, StyleSheet, Dimensions, Image } from "react-native";
+import { View, StyleSheet, Dimensions, Image, TouchableOpacity } from "react-native";
 
 import MovableBuilding from "./MovableBuilding";
 import Camera from "./Camera";
@@ -46,16 +46,10 @@ export default function Map({
   // ✅ تحسين: دالة مبسطة لعرض المباني في طبقة واحدة
   function renderBuildings() {
     const buildings = gameState.buildings || [];
-    
-    // ✅ ترتيب المباني حسب موقعها (لا طبقات)
+
+    // ✅ ترتيب المباني حسب العمق (Y) لضمان المنظور البصري الصحيح
     return buildings
-      .sort((a, b) => {
-        // ترتيب حسب الصف ثم العمود
-        const rowA = Math.floor(a.y / TILE_SIZE);
-        const rowB = Math.floor(b.y / TILE_SIZE);
-        if (rowA !== rowB) return rowA - rowB;
-        return Math.floor(a.x / TILE_SIZE) - Math.floor(b.x / TILE_SIZE);
-      })
+      .sort((a, b) => (a.y + (BUILDINGS[a.type]?.size || 1)) - (b.y + (BUILDINGS[b.type]?.size || 1)))
       .map((b) => {
         const buildingData = BUILDINGS[b.type];
         if (!buildingData) return null;
@@ -80,8 +74,8 @@ export default function Map({
               if (onMoveBuilding) onMoveBuilding(moveObj);
             }}
             gameBuildings={gameState.buildings || []}
-            // ✅ إضافة خاصية zIndex ثابتة للجميع
-            style={{ zIndex: 1 }}
+            // ✅ إزالة zIndex الثابت للسماح للنظام الديناميكي بالعمل
+            style={{ }}
           />
         );
       });
@@ -89,34 +83,44 @@ export default function Map({
 
   return (
     <View style={styles.fullScreen}>
-      <Camera
-        mapWidth={MAP_WIDTH}
-        mapHeight={MAP_HEIGHT}
-        onCameraOffsetChange={handleCameraOffsetChange}
+      <TouchableOpacity
+        activeOpacity={1}
+        style={styles.fullScreen}
+        onPress={() => {
+          setSelectedBuilding(null);
+          if (onSelectBuilding) onSelectBuilding(null);
+          onOpenShop(false);
+        }}
       >
-        <View style={styles.mapContainer}>
-          {/* ✅ الخلفية */}
-          <Image
-            source={require("../assets/images/Game_floor.jpg")}
-            style={styles.backgroundImage}
-          />
+        <Camera
+          mapWidth={MAP_WIDTH}
+          mapHeight={MAP_HEIGHT}
+          onCameraOffsetChange={handleCameraOffsetChange}
+        >
+          <View style={styles.mapContainer}>
+            {/* ✅ الخلفية */}
+            <Image
+              source={require("../assets/images/Game_floor.jpg")}
+              style={styles.backgroundImage}
+            />
 
-          {/* ✅ طبقة المباني الواحدة - مبسطة */}
-          <View
-            style={[
-              styles.buildingLayer,
-              {
-                width: ACTIVE_SIZE,
-                height: ACTIVE_SIZE,
-                left: (MAP_WIDTH - ACTIVE_SIZE) / 2,
-                top: (MAP_HEIGHT - ACTIVE_SIZE) / 2,
-              },
-            ]}
-          >
-            {renderBuildings()}
+            {/* ✅ طبقة المباني الواحدة - مبسطة */}
+            <View
+              style={[
+                styles.buildingLayer,
+                {
+                  width: ACTIVE_SIZE,
+                  height: ACTIVE_SIZE,
+                  left: (MAP_WIDTH - ACTIVE_SIZE) / 2,
+                  top: (MAP_HEIGHT - ACTIVE_SIZE) / 2,
+                },
+              ]}
+            >
+              {renderBuildings()}
+            </View>
           </View>
-        </View>
-      </Camera>
+        </Camera>
+      </TouchableOpacity>
 
       {/* نافذة الترقية */}
       {selectedBuilding && (
@@ -125,6 +129,7 @@ export default function Map({
           buildingData={BUILDINGS[selectedBuilding.type]}
           currentResources={gameState.resources}
           currentTime={Date.now()}
+          townHallLevel={gameState.buildings?.find(b => b.type === "Town_Hall")?.level || 1} // ✅ تمرير المستوى الفعلي
           onClose={() => setSelectedBuilding(null)}
           onUpgrade={(buildingId, durationMs, costObj) => {
             if (onStartUpgrade) onStartUpgrade(buildingId, durationMs, costObj);

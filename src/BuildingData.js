@@ -23,11 +23,11 @@ const makeLevels = (baseCost, costMultiplier, buildTimeBase, timeMultiplier, lev
 
 export const BUILDINGS = {
   // -------------------------------------------------------------------
-  // 1. Town Hall (القاعدة) - 8 مستويات
+  // 1. Town Hall (القلعة) - 8 مستويات
   // -------------------------------------------------------------------
   [TOWN_HALL_ID]: {
-    name: "Town Hall",
-    name_ar: "مبنى القاعدة",
+    name: "Castle",
+    name_ar: "القلعة",
     maxCount: 1,
     size: 4,
     canBePlaced: false,
@@ -40,7 +40,7 @@ export const BUILDINGS = {
         image: require("../assets/images/Town_Hall.png"),
         production: {},
         storage: { Cobalt: 500, Elixir: 500, Crystal: 50 },
-        unlocks: ["Cobalt_Mine", "Elixir_Collector"],
+        unlocks: ["Cobalt_Mine", "Elixir_Collector", "Cobalt_Warehouse", "Elixir_Storehouse"],
         maxBuildersUnlocked: 1,
       },
       2: {
@@ -49,7 +49,7 @@ export const BUILDINGS = {
         image: require("../assets/images/Town_Hall_2.png"),
         production: {},
         storage: { Cobalt: 1000, Elixir: 1000, Crystal: 100 },
-        unlocks: ["Barracks"],
+        unlocks: ["Barracks", "Cannon"],
         maxBuildersUnlocked: 1,
       },
       3: {
@@ -58,7 +58,7 @@ export const BUILDINGS = {
         image: require("../assets/images/Town_Hall_3.png"),
         production: {},
         storage: { Cobalt: 2000, Elixir: 2000, Crystal: 200 },
-        unlocks: ["Laser_Tower"],
+        unlocks: ["Laser_Tower", "Forces_Camp"],
         maxBuildersUnlocked: 2,
       },
       4: {
@@ -82,7 +82,7 @@ export const BUILDINGS = {
       6: {
         cost: { Cobalt: 4000 },
         buildTime: 900,
-        image: require("../assets/images/Town_Hall_5.png"),
+        image: require("../assets/images/Town_Hall_6.png"),
         production: {},
         storage: { Cobalt: 16000, Elixir: 16000, Crystal: 1200 },
         unlocks: [],
@@ -91,7 +91,7 @@ export const BUILDINGS = {
       7: {
         cost: { Cobalt: 8000 },
         buildTime: 1800,
-        image: require("../assets/images/Town_Hall_5.png"),
+        image: require("../assets/images/Town_Hall_7.png"),
         production: {},
         storage: { Cobalt: 32000, Elixir: 32000, Crystal: 1600 },
         unlocks: [],
@@ -100,7 +100,7 @@ export const BUILDINGS = {
       8: {
         cost: { Cobalt: 16000 },
         buildTime: 3600,
-        image: require("../assets/images/Town_Hall_5.png"),
+        image: require("../assets/images/Town_Hall_8.png"),
         production: {},
         storage: { Cobalt: 64000, Elixir: 64000, Crystal: 2000 },
         unlocks: [],
@@ -122,13 +122,13 @@ export const BUILDINGS = {
     maxLevel: 8,
     levels: {
       1: { cost: { Cobalt: 50 }, buildTime: 10, image: require("../assets/images/Cobalt_Mine.png"), production: { Cobalt: 2 }, storage: {} },
-      2: { cost: { Cobalt: 100 }, buildTime: 15, image: require("../assets/images/Cobalt_Mine_2.png"), production: { Cobalt: 5 } },
-      3: { cost: { Cobalt: 220 }, buildTime: 20, image: require("../assets/images/Cobalt_Mine_3.png"), production: { Cobalt: 12 } },
-      4: { cost: { Cobalt: 480 }, buildTime: 30, image: require("../assets/images/Cobalt_Mine_4.png"), production: { Cobalt: 25 } },
-      5: { cost: { Cobalt: 1000 }, buildTime: 60, image: require("../assets/images/Cobalt_Mine_5.png"), production: { Cobalt: 60 } },
-      6: { cost: { Cobalt: 2200 }, buildTime: 120, image: require("../assets/images/Cobalt_Mine_5.png"), production: { Cobalt: 140 } },
-      7: { cost: { Cobalt: 4800 }, buildTime: 240, image: require("../assets/images/Cobalt_Mine_5.png"), production: { Cobalt: 320 } },
-      8: { cost: { Cobalt: 10000 }, buildTime: 480, image: require("../assets/images/Cobalt_Mine_5.png"), production: { Cobalt: 700 } },
+      2: { cost: { Cobalt: 100 }, buildTime: 15, image: require("../assets/images/Cobalt_Mine_2.png"), production: { Cobalt: 5 }, requiresTownHall: 2 },
+      3: { cost: { Cobalt: 220 }, buildTime: 20, image: require("../assets/images/Cobalt_Mine_3.png"), production: { Cobalt: 12 }, requiresTownHall: 3 },
+      4: { cost: { Cobalt: 480 }, buildTime: 30, image: require("../assets/images/Cobalt_Mine_4.png"), production: { Cobalt: 25 }, requiresTownHall: 4 },
+      5: { cost: { Cobalt: 1000 }, buildTime: 60, image: require("../assets/images/Cobalt_Mine_5.png"), production: { Cobalt: 60 }, requiresTownHall: 5 },
+      6: { cost: { Cobalt: 2200 }, buildTime: 120, image: require("../assets/images/Cobalt_Mine_5.png"), production: { Cobalt: 140 }, requiresTownHall: 6 },
+      7: { cost: { Cobalt: 4800 }, buildTime: 240, image: require("../assets/images/Cobalt_Mine_5.png"), production: { Cobalt: 320 }, requiresTownHall: 7 },
+      8: { cost: { Cobalt: 10000 }, buildTime: 480, image: require("../assets/images/Cobalt_Mine_5.png"), production: { Cobalt: 700 }, requiresTownHall: 8 },
     },
   },
 
@@ -145,18 +145,18 @@ export const BUILDINGS = {
     maxLevel: 8,
     levels: {
       1: { cost: { Elixir: 50 }, buildTime: 10, image: require("../assets/images/Elixir_Collector.png"), production: { Elixir: 2 } },
-      2: { cost: { Elixir: 120 }, buildTime: 15, image: require("../assets/images/Elixir_Collector_2.png"), production: { Elixir: 6 } },
-      3: { cost: { Elixir: 300 }, buildTime: 20, image: require("../assets/images/Elixir_Collector_3.png"), production: { Elixir: 14 } },
-      4: { cost: { Elixir: 680 }, buildTime: 30, image: require("../assets/images/Elixir_Collector_4.png"), production: { Elixir: 32 } },
-      5: { cost: { Elixir: 1500 }, buildTime: 60, image: require("../assets/images/Elixir_Collector_5.png"), production: { Elixir: 80 } },
-      6: { cost: { Elixir: 3300 }, buildTime: 120, image: require("../assets/images/Elixir_Collector_5.png"), production: { Elixir: 180 } },
-      7: { cost: { Elixir: 7200 }, buildTime: 240, image: require("../assets/images/Elixir_Collector_5.png"), production: { Elixir: 420 } },
-      8: { cost: { Elixir: 16000 }, buildTime: 480, image: require("../assets/images/Elixir_Collector_5.png"), production: { Elixir: 1000 } },
+      2: { cost: { Elixir: 120 }, buildTime: 15, image: require("../assets/images/Elixir_Collector_2.png"), production: { Elixir: 6 }, requiresTownHall: 2 },
+      3: { cost: { Elixir: 300 }, buildTime: 20, image: require("../assets/images/Elixir_Collector_3.png"), production: { Elixir: 14 }, requiresTownHall: 3 },
+      4: { cost: { Elixir: 680 }, buildTime: 30, image: require("../assets/images/Elixir_Collector_4.png"), production: { Elixir: 32 }, requiresTownHall: 4 },
+      5: { cost: { Elixir: 1500 }, buildTime: 60, image: require("../assets/images/Elixir_Collector_5.png"), production: { Elixir: 80 }, requiresTownHall: 5 },
+      6: { cost: { Elixir: 3300 }, buildTime: 120, image: require("../assets/images/Elixir_Collector_6.png"), production: { Elixir: 180 }, requiresTownHall: 6 },
+      7: { cost: { Elixir: 7200 }, buildTime: 240, image: require("../assets/images/Elixir_Collector_7.png"), production: { Elixir: 420 }, requiresTownHall: 7 },
+      8: { cost: { Elixir: 16000 }, buildTime: 480, image: require("../assets/images/Elixir_Collector_8.png"), production: { Elixir: 1000 }, requiresTownHall: 8 },
     },
   },
 
   // -------------------------------------------------------------------
-  // 4. Crystal Mine (منجم الكريستال) - 3 مستويات فقط ✅
+  // 4. Crystal Mine (منجم الكريستال) - 3 مستويات فقط  ✅
   // -------------------------------------------------------------------
   Crystal_Mine: {
     name: "Crystal Mine",
@@ -203,15 +203,16 @@ export const BUILDINGS = {
     image: require("../assets/images/Cobalt_warehouse.png"),
     maxLevel: 8,
     levels: {
-      1: { cost: { Cobalt: 100 }, buildTime: 20, image: require("../assets/images/Cobalt_warehouse.png"), storage: { Cobalt: 2000 } },
-      2: { cost: { Cobalt: 300 }, buildTime: 40, image: require("../assets/images/Cobalt_warehouse_2.png"), storage: { Cobalt: 5000 } },
-      3: { cost: { Cobalt: 800 }, buildTime: 80, image: require("../assets/images/Cobalt_warehouse_3.png"), storage: { Cobalt: 12000 } },
-      4: { cost: { Cobalt: 2000 }, buildTime: 160, image: require("../assets/images/Cobalt_warehouse_4.png"), storage: { Cobalt: 30000 } },
-      5: { cost: { Cobalt: 4800 }, buildTime: 320, image: require("../assets/images/Cobalt_warehouse_5.png"), storage: { Cobalt: 80000 } },
-      6: { cost: { Cobalt: 10000 }, buildTime: 640, image: require("../assets/images/Cobalt_warehouse_5.png"), storage: { Cobalt: 160000 } },
-      7: { cost: { Cobalt: 22000 }, buildTime: 1200, image: require("../assets/images/Cobalt_warehouse_5.png"), storage: { Cobalt: 320000 } },
-      8: { cost: { Cobalt: 48000 }, buildTime: 2400, image: require("../assets/images/Cobalt_warehouse_5.png"), storage: { Cobalt: 640000 } },
+      1: { cost: { Cobalt: 100 }, buildTime: 20, image: require("../assets/images/Cobalt_warehouse.png"), storage: { Cobalt: 2000 }, requiresTownHall: 1 },
+      2: { cost: { Cobalt: 300 }, buildTime: 40, image: require("../assets/images/Cobalt_warehouse_2.png"), storage: { Cobalt: 5000 }, requiresTownHall: 2 },
+      3: { cost: { Cobalt: 800 }, buildTime: 80, image: require("../assets/images/Cobalt_warehouse_3.png"), storage: { Cobalt: 12000 }, requiresTownHall: 3 },
+      4: { cost: { Cobalt: 2000 }, buildTime: 160, image: require("../assets/images/Cobalt_warehouse_4.png"), storage: { Cobalt: 30000 }, requiresTownHall: 4 },
+      5: { cost: { Cobalt: 4800 }, buildTime: 320, image: require("../assets/images/Cobalt_warehouse_5.png"), storage: { Cobalt: 80000 }, requiresTownHall: 5 },
+      6: { cost: { Cobalt: 10000 }, buildTime: 640, image: require("../assets/images/Cobalt_warehouse_5.png"), storage: { Cobalt: 160000 }, requiresTownHall: 6 },
+      7: { cost: { Cobalt: 22000 }, buildTime: 1200, image: require("../assets/images/Cobalt_warehouse_5.png"), storage: { Cobalt: 320000 }, requiresTownHall: 7 },
+      8: { cost: { Cobalt: 48000 }, buildTime: 2400, image: require("../assets/images/Cobalt_warehouse_5.png"), storage: { Cobalt: 640000 }, requiresTownHall: 8 },
     },
+    requiresTownHall: 1,
   },
 
   // -------------------------------------------------------------------
@@ -226,15 +227,16 @@ export const BUILDINGS = {
     image: require("../assets/images/Elixir_storehouse.png"),
     maxLevel: 8,
     levels: {
-      1: { cost: { Elixir: 100 }, buildTime: 20, image: require("../assets/images/Elixir_storehouse.png"), storage: { Elixir: 2000 } },
-      2: { cost: { Elixir: 300 }, buildTime: 40, image: require("../assets/images/Elixir_storehouse_2.png"), storage: { Elixir: 5000 } },
-      3: { cost: { Elixir: 800 }, buildTime: 80, image: require("../assets/images/Elixir_storehouse_3.png"), storage: { Elixir: 12000 } },
-      4: { cost: { Elixir: 2000 }, buildTime: 160, image: require("../assets/images/Elixir_storehouse_4.png"), storage: { Elixir: 30000 } },
-      5: { cost: { Elixir: 4800 }, buildTime: 320, image: require("../assets/images/Elixir_storehouse_5.png"), storage: { Elixir: 80000 } },
-      6: { cost: { Elixir: 10000 }, buildTime: 640, image: require("../assets/images/Elixir_storehouse_5.png"), storage: { Elixir: 160000 } },
-      7: { cost: { Elixir: 22000 }, buildTime: 1200, image: require("../assets/images/Elixir_storehouse_5.png"), storage: { Elixir: 320000 } },
-      8: { cost: { Elixir: 48000 }, buildTime: 2400, image: require("../assets/images/Elixir_storehouse_5.png"), storage: { Elixir: 640000 } },
+      1: { cost: { Elixir: 100 }, buildTime: 20, image: require("../assets/images/Elixir_storehouse.png"), storage: { Elixir: 2000 }, requiresTownHall: 1 },
+      2: { cost: { Elixir: 300 }, buildTime: 40, image: require("../assets/images/Elixir_storehouse_2.png"), storage: { Elixir: 5000 }, requiresTownHall: 2 },
+      3: { cost: { Elixir: 800 }, buildTime: 80, image: require("../assets/images/Elixir_storehouse_3.png"), storage: { Elixir: 12000 }, requiresTownHall: 3 },
+      4: { cost: { Elixir: 2000 }, buildTime: 160, image: require("../assets/images/Elixir_storehouse_4.png"), storage: { Elixir: 30000 }, requiresTownHall: 4 },
+      5: { cost: { Elixir: 4800 }, buildTime: 320, image: require("../assets/images/Elixir_storehouse_5.png"), storage: { Elixir: 80000 }, requiresTownHall: 5 },
+      6: { cost: { Elixir: 10000 }, buildTime: 640, image: require("../assets/images/Elixir_storehouse_5.png"), storage: { Elixir: 160000 }, requiresTownHall: 6 },
+      7: { cost: { Elixir: 22000 }, buildTime: 1200, image: require("../assets/images/Elixir_storehouse_5.png"), storage: { Elixir: 320000 }, requiresTownHall: 7 },
+      8: { cost: { Elixir: 48000 }, buildTime: 2400, image: require("../assets/images/Elixir_storehouse_5.png"), storage: { Elixir: 640000 }, requiresTownHall: 8 },
     },
+    requiresTownHall: 1,
   },
 
   // -------------------------------------------------------------------
@@ -249,15 +251,16 @@ export const BUILDINGS = {
     image: require("../assets/images/cannon.png"),
     maxLevel: 8,
     levels: {
-      1: { cost: { Cobalt: 80 }, buildTime: 20, image: require("../assets/images/cannon.png") },
-      2: { cost: { Cobalt: 200 }, buildTime: 40, image: require("../assets/images/cannon_2.png") },
-      3: { cost: { Cobalt: 500 }, buildTime: 80, image: require("../assets/images/cannon_3.png") },
-      4: { cost: { Cobalt: 1200 }, buildTime: 160, image: require("../assets/images/cannon_3.png") },
-      5: { cost: { Cobalt: 3000 }, buildTime: 320, image: require("../assets/images/cannon_3.png") },
-      6: { cost: { Cobalt: 7000 }, buildTime: 640, image: require("../assets/images/cannon_3.png") },
-      7: { cost: { Cobalt: 16000 }, buildTime: 1200, image: require("../assets/images/cannon_3.png") },
-      8: { cost: { Cobalt: 36000 }, buildTime: 2400, image: require("../assets/images/cannon_3.png") },
+      1: { cost: { Cobalt: 80 }, buildTime: 20, image: require("../assets/images/cannon.png"), requiresTownHall: 2 },
+      2: { cost: { Cobalt: 200 }, buildTime: 40, image: require("../assets/images/cannon_2.png"), requiresTownHall: 2 },
+      3: { cost: { Cobalt: 500 }, buildTime: 80, image: require("../assets/images/cannon_3.png"), requiresTownHall: 3 },
+      4: { cost: { Cobalt: 1200 }, buildTime: 160, image: require("../assets/images/cannon_3.png"), requiresTownHall: 4 },
+      5: { cost: { Cobalt: 3000 }, buildTime: 320, image: require("../assets/images/cannon_3.png"), requiresTownHall: 5 },
+      6: { cost: { Cobalt: 7000 }, buildTime: 640, image: require("../assets/images/cannon_3.png"), requiresTownHall: 6 },
+      7: { cost: { Cobalt: 16000 }, buildTime: 1200, image: require("../assets/images/cannon_3.png"), requiresTownHall: 7 },
+      8: { cost: { Cobalt: 36000 }, buildTime: 2400, image: require("../assets/images/cannon_3.png"), requiresTownHall: 8 },
     },
+    requiresTownHall: 2,
   },
 
   // -------------------------------------------------------------------
@@ -272,15 +275,16 @@ export const BUILDINGS = {
     image: require("../assets/images/Laser_Tower.png"),
     maxLevel: 8,
     levels: {
-      1: { cost: { Elixir: 80 }, buildTime: 35, image: require("../assets/images/Laser_Tower.png") },
-      2: { cost: { Elixir: 200 }, buildTime: 70, image: require("../assets/images/Laser_Tower_2.png") },
-      3: { cost: { Elixir: 500 }, buildTime: 120, image: require("../assets/images/Laser_Tower_3.png") },
-      4: { cost: { Elixir: 1200 }, buildTime: 240, image: require("../assets/images/Laser_Tower_3.png") },
-      5: { cost: { Elixir: 3000 }, buildTime: 480, image: require("../assets/images/Laser_Tower_3.png") },
-      6: { cost: { Elixir: 7000 }, buildTime: 960, image: require("../assets/images/Laser_Tower_3.png") },
-      7: { cost: { Elixir: 16000 }, buildTime: 1920, image: require("../assets/images/Laser_Tower_3.png") },
-      8: { cost: { Elixir: 36000 }, buildTime: 3840, image: require("../assets/images/Laser_Tower_3.png") },
+      1: { cost: { Elixir: 80 }, buildTime: 35, image: require("../assets/images/Laser_Tower.png"), requiresTownHall: 3 },
+      2: { cost: { Elixir: 200 }, buildTime: 70, image: require("../assets/images/Laser_Tower_2.png"), requiresTownHall: 3 },
+      3: { cost: { Elixir: 500 }, buildTime: 120, image: require("../assets/images/Laser_Tower_3.png"), requiresTownHall: 4 },
+      4: { cost: { Elixir: 1200 }, buildTime: 240, image: require("../assets/images/Laser_Tower_3.png"), requiresTownHall: 5 },
+      5: { cost: { Elixir: 3000 }, buildTime: 480, image: require("../assets/images/Laser_Tower_3.png"), requiresTownHall: 6 },
+      6: { cost: { Elixir: 7000 }, buildTime: 960, image: require("../assets/images/Laser_Tower_3.png"), requiresTownHall: 7 },
+      7: { cost: { Elixir: 16000 }, buildTime: 1920, image: require("../assets/images/Laser_Tower_3.png"), requiresTownHall: 8 },
+      8: { cost: { Elixir: 36000 }, buildTime: 3840, image: require("../assets/images/Laser_Tower_3.png"), requiresTownHall: 8 },
     },
+    requiresTownHall: 3,
   },
 
   // -------------------------------------------------------------------
@@ -334,15 +338,16 @@ export const BUILDINGS = {
     image: require("../assets/images/Forces_camp.png"),
     maxLevel: 8,
     levels: {
-      1: { cost: { Cobalt: 200 }, buildTime: 60, image: require("../assets/images/Forces_camp.png"), troopCapacity: 10 },
-      2: { cost: { Cobalt: 800 }, buildTime: 180, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 25 },
-      3: { cost: { Cobalt: 2500 }, buildTime: 360, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 50 },
-      4: { cost: { Cobalt: 6000 }, buildTime: 720, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 100 },
-      5: { cost: { Cobalt: 15000 }, buildTime: 1440, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 200 },
-      6: { cost: { Cobalt: 35000 }, buildTime: 2880, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 400 },
-      7: { cost: { Cobalt: 80000 }, buildTime: 5760, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 800 },
-      8: { cost: { Cobalt: 180000 }, buildTime: 11520, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 1500 },
+      1: { cost: { Cobalt: 200 }, buildTime: 60, image: require("../assets/images/Forces_camp.png"), troopCapacity: 10, requiresTownHall: 3 },
+      2: { cost: { Cobalt: 800 }, buildTime: 180, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 25, requiresTownHall: 4 },
+      3: { cost: { Cobalt: 2500 }, buildTime: 360, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 50, requiresTownHall: 5 },
+      4: { cost: { Cobalt: 6000 }, buildTime: 720, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 100, requiresTownHall: 6 },
+      5: { cost: { Cobalt: 15000 }, buildTime: 1440, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 200, requiresTownHall: 7 },
+      6: { cost: { Cobalt: 35000 }, buildTime: 2880, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 400, requiresTownHall: 8 },
+      7: { cost: { Cobalt: 80000 }, buildTime: 5760, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 800, requiresTownHall: 8 },
+      8: { cost: { Cobalt: 180000 }, buildTime: 11520, image: require("../assets/images/Forces_camp_2.png"), troopCapacity: 1500, requiresTownHall: 8 },
     },
+    requiresTownHall: 3,
   },
 
   // -------------------------------------------------------------------
@@ -357,15 +362,16 @@ export const BUILDINGS = {
     image: require("../assets/images/barracks.png"),
     maxLevel: 8,
     levels: {
-      1: { cost: { Cobalt: 300 }, buildTime: 60, image: require("../assets/images/barracks.png"), unlocksTroops: ["MeleeSoldier"] },
-      2: { cost: { Cobalt: 900 }, buildTime: 180, image: require("../assets/images/barracks_2.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper"] },
-      3: { cost: { Cobalt: 2500 }, buildTime: 480, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank"] },
-      4: { cost: { Cobalt: 6000 }, buildTime: 960, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank", "AirDrone"] },
-      5: { cost: { Cobalt: 15000 }, buildTime: 1920, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank", "AirDrone", "HeavyMech"] },
-      6: { cost: { Cobalt: 35000 }, buildTime: 3840, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank", "AirDrone", "HeavyMech", "StealthAssassin"] },
-      7: { cost: { Cobalt: 80000 }, buildTime: 7680, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank", "AirDrone", "HeavyMech", "StealthAssassin", "SiegeGolem"] },
-      8: { cost: { Cobalt: 180000 }, buildTime: 15360, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank", "AirDrone", "HeavyMech", "StealthAssassin", "SiegeGolem", "DragonRider"] },
+      1: { cost: { Cobalt: 300 }, buildTime: 60, image: require("../assets/images/barracks.png"), unlocksTroops: ["MeleeSoldier"], requiresTownHall: 2 },
+      2: { cost: { Cobalt: 900 }, buildTime: 180, image: require("../assets/images/barracks_2.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper"], requiresTownHall: 3 },
+      3: { cost: { Cobalt: 2500 }, buildTime: 480, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank"], requiresTownHall: 4 },
+      4: { cost: { Cobalt: 6000 }, buildTime: 960, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank", "AirDrone"], requiresTownHall: 5 },
+      5: { cost: { Cobalt: 15000 }, buildTime: 1920, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank", "AirDrone", "HeavyMech"], requiresTownHall: 6 },
+      6: { cost: { Cobalt: 35000 }, buildTime: 3840, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank", "AirDrone", "HeavyMech", "StealthAssassin"], requiresTownHall: 7 },
+      7: { cost: { Cobalt: 80000 }, buildTime: 7680, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank", "AirDrone", "HeavyMech", "StealthAssassin", "SiegeGolem"], requiresTownHall: 8 },
+      8: { cost: { Cobalt: 180000 }, buildTime: 15360, image: require("../assets/images/barracks_3.png"), unlocksTroops: ["MeleeSoldier", "LaserTrooper", "RoboTank", "AirDrone", "HeavyMech", "StealthAssassin", "SiegeGolem", "DragonRider"], requiresTownHall: 8 },
     },
+    requiresTownHall: 2,
   },
 };
 
@@ -374,19 +380,35 @@ export const getRequiredTownHallLevel = (buildingType, level) => {
   const building = BUILDINGS[buildingType];
   if (!building || !building.levels[level]) return 1;
 
-  // إذا كان المبنى يتطلب مستوى محدد (مثل منجم الكريستال)
+  // إذا كان المبنى يتطلب مستوى محدد صراحة (مثل منجم الكريستال)
   if (building.levels[level].requiresTownHall) {
     return building.levels[level].requiresTownHall;
   }
 
-  // قاعدة عامة: لا يمكن ترقية مبنى أعلى من مستوى القلعة
+  // ✅ استثناء كوخ البناء من متطلبات القلعة
+  if (buildingType === "Builder_Hut") {
+    return 1;
+  }
+
+  // قاعدة عامة: لا يمكن ترقية أي مبنى لمستوى أعلى من مستوى القلعة
   return level;
 };
 
-// ✅ دالة مساعدة: التحقق إذا كان يمكن ترقية المبنى بناءً على مستوى القلعة
-export const canUpgradeBuilding = (buildingLevel, townHallLevel) => {
-  // لا يمكن أن يكون مستوى المبنى أعلى من مستوى القلعة
-  return buildingLevel < townHallLevel;
+// ✅ دالة مساعدة: الحصول على مستوى القلعة الحالي مباشرة من قائمة المباني
+export const getActualTownHallLevel = (buildings) => {
+  const townHall = buildings.find(b => b.type === TOWN_HALL_ID);
+  return townHall ? townHall.level : 1;
+};
+
+// ✅ دالة مساعدة: التحقق إذا كان يمكن ترقية المبنى بناءً على مستوى القلعة الفعلي
+export const canUpgradeBuilding = (buildingType, nextLevel, buildings) => {
+  const townHallLevel = getActualTownHallLevel(buildings);
+
+  // ✅ استثناء مبنى القلعة وكوخ البناء من شرط مستوى القلعة للترقية
+  if (buildingType === TOWN_HALL_ID || buildingType === "Builder_Hut") {
+    return true;
+  }
+  return nextLevel <= townHallLevel;
 };
 
 // ✅ دالة مساعدة للحصول على حجم المبنى
@@ -445,24 +467,24 @@ export const getAvailableBuildings = (townHallLevel) => {
 export const canAddBuilding = (buildingKey, existingBuildings) => {
   const building = BUILDINGS[buildingKey];
   if (!building) return false;
-  
+
   // استثناء مبنى القاعدة - يمكن ترقيته فقط
   if (buildingKey === TOWN_HALL_ID) {
     return false;
   }
-  
+
   // استثناء كوخ البناء - يظهر في البداية فقط
   if (buildingKey === "Builder_Hut") {
     const currentCount = existingBuildings.filter(b => b.type === buildingKey).length;
     return currentCount < 1; // يمكن أن يكون هناك واحد فقط
   }
-  
+
   // إذا كان للمبنى حد أقصى محدد (maxCount)
   if (building.maxCount !== undefined) {
     const buildingCount = existingBuildings.filter(b => b.type === buildingKey).length;
     return buildingCount < building.maxCount;
   }
-  
+
   // إذا لم يكن هناك maxCount محدد، نعود بـ true (يمكن إضافة واحد على الأقل)
   return true;
 };
